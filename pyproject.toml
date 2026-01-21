@@ -39,5 +39,8 @@ test = { features = ["test"], solve-group = "default" }
 [tool.pixi.feature.test.tasks]
 test = "pytest"
 
+[tool.pixi.feature.test.dependencies]
+ipykernel = ">=7.1.0,<8"
+
 [dependency-groups]
 test = ["pytest"]

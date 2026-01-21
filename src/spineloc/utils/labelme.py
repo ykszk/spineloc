@@ -38,6 +38,13 @@ class LabelMe(BaseModel):
         with open(filename) as f:
             return LabelMe.model_validate_json(f.read())
 
+    def resolve_image_path(self, base_dir: Union[str, Path]) -> Path:
+        base_dir = Path(base_dir)
+        original_path = Path(self.imagePath)
+        if original_path.is_absolute():
+            return original_path
+        return (base_dir / self.imagePath).resolve()
+
     def shift(self, tx: float, ty: float) -> "LabelMe":
         shapes = []
         for shape in self.shapes:

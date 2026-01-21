@@ -20,6 +20,17 @@ class RadiographView(Enum):
     LATERAL_LEFT = 1
     LATERAL_RIGHT = 2
 
+    def flip(self) -> "RadiographView":
+        """Return the view after a horizontal flip."""
+        if self == RadiographView.FRONTAL:
+            return RadiographView.FRONTAL
+        elif self == RadiographView.LATERAL_LEFT:
+            return RadiographView.LATERAL_RIGHT
+        elif self == RadiographView.LATERAL_RIGHT:
+            return RadiographView.LATERAL_LEFT
+        else:
+            raise ValueError(f"Unknown RadiographView: {self}")
+
 
 class SpineRadiograph:
     """

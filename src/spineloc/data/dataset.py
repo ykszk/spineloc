@@ -1,8 +1,11 @@
+from typing import Optional
+
+import albumentations as A
 import numpy as np
-import torch
 from torch.utils.data import Dataset
 
 from ..data.spine_radiograph import SpineRadiograph
+from ..data.transforms import was_flipped
 
 
 class SpineCoordinateDataset(Dataset):
@@ -15,7 +18,7 @@ class SpineCoordinateDataset(Dataset):
         spine_images: list[SpineRadiograph],
         aspect_ratios: list[float] = [0.5, 0.75, 1.0, 1.5, 2.0],
         crop_height_min_max: tuple[float, float] = (10, 20),  # in normalized units
-        transform=None,
+        transform: Optional[A.Compose] = None,
     ):
         self.spine_images = spine_images
         self.aspect_ratios = aspect_ratios
@@ -57,15 +60,16 @@ class SpineCoordinateDataset(Dataset):
         end_x = int(start_x + crop_w)
 
         crop_img, anat_coords = spine_radiograph.crop(start_y, start_x, end_y, end_x)
-
-        # Encode view
-        view_id = torch.tensor(spine_radiograph.view.value, dtype=torch.long)
-
-        # Convert to tensor
-        crop_img = torch.from_numpy(crop_img).float()
+        view = spine_radiograph.view
 
         # Apply transforms if any
         if self.transform:
-            crop_img = self.transform(crop_img)
+            transformed = self.transform(image=crop_img)
+            crop_img = transformed["image"]
+            if was_flipped(transformed):
+                view = view.flip()
 
-        return crop_img, torch.tensor(anat_coords, dtype=torch.float32), view_id
+        # Encode view
+        view_id = view.value
+
+        return crop_img, anat_coords, view_id

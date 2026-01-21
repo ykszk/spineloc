@@ -73,10 +73,10 @@ def save_dataset(dataset: SpineCoordinateDataset, output_dir: Path):
         text_path = output_dir / f"crop_{i:03d}.txt"
 
         if isinstance(crop_img, torch.Tensor):
-            crop_img = crop_img.numpy()
+            crop_img = crop_img.numpy()[0]
             # normalize
             crop_img = (crop_img - crop_img.min()) / (crop_img.max() - crop_img.min()) * 255.0
-        img = Image.fromarray(crop_img.astype("uint8")[0])
+        img = Image.fromarray(crop_img.astype("uint8"))
         img.save(image_path)
 
         with open(text_path, "w") as f:

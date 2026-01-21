@@ -43,7 +43,9 @@ class LabelMe(BaseModel):
         original_path = Path(self.imagePath)
         if original_path.is_absolute():
             return original_path
-        return (base_dir / self.imagePath).resolve()
+        resolved = (base_dir / self.imagePath).resolve()
+        self.imagePath = str(resolved)
+        return resolved
 
     def shift(self, tx: float, ty: float) -> "LabelMe":
         shapes = []

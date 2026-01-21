@@ -9,7 +9,7 @@ def test_generate_coordinate_targets():
             [0.0, 0.0, 1.0, 1.0],
             [0.5, 0.5, 0.75, 0.75],
         ]
-    )  # Shape: (2, 4)
+    )  # Shape: (B=2, 4)
     feature_map_size = (4, 4)
 
     expected_targets = torch.tensor(
@@ -43,7 +43,7 @@ def test_generate_coordinate_targets():
                 ],
             ],
         ]
-    )  # Shape: (2, 4, 4)
+    )  # Shape: (B=2, 2, 4, 4)
 
     targets = spineloc.models.spine.generate_coordinate_targets(coords, feature_map_size)
 

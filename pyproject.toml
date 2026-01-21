@@ -29,6 +29,7 @@ pytorch-lightning = ">=2.6.0,<3"
 hydra-core = "*"
 loguru = ">=0.7.3,<0.8"
 joblib = ">=1.5.3,<2"
+pillow = ">=12.1.0,<13"
 
 [tool.pixi.tasks]
 

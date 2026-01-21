@@ -8,13 +8,11 @@ class SpineLoss:
         coord_loss_type="l2",
         coord_weight=1.0,
         view_weight=1.0,
-        laterality_weight=1.0,
     ):
         assert coord_loss_type in ["l2", "smooth_l1", "l1"], "Unsupported coordinate loss type."
         self.coord_loss_type = coord_loss_type
         self.coord_weight = coord_weight
         self.view_weight = view_weight
-        self.laterality_weight = laterality_weight
 
         # coordinate loss function without uncertainty
         if self.coord_loss_type == "smooth_l1":
@@ -51,8 +49,6 @@ class SpineLoss:
         target_coords,
         view_logits,
         target_views,
-        laterality_logits,
-        target_laterality,
         coord_log_var=None,
     ):
         """Compute multi-task loss."""
@@ -65,20 +61,6 @@ class SpineLoss:
         # View classification loss
         view_loss = F.cross_entropy(view_logits, target_views)
 
-        # Laterality classification loss (only for lateral views)
-        lateral_mask = target_laterality >= 0
-        if lateral_mask.sum() > 0:
-            laterality_loss = F.cross_entropy(
-                laterality_logits[lateral_mask], target_laterality[lateral_mask]
-            )
-        else:
-            laterality_loss = torch.tensor(0.0, device=pred_coords.device)
+        total_loss = self.coord_weight * coord_loss + self.view_weight * view_loss
 
-        # Total loss
-        total_loss = (
-            self.coord_weight * coord_loss
-            + self.view_weight * view_loss
-            + self.laterality_weight * laterality_loss
-        )
-
-        return total_loss, coord_loss, view_loss, laterality_loss
+        return total_loss, coord_loss, view_loss

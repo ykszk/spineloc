@@ -1,23 +1,98 @@
+from enum import Enum
+
 import numpy as np
 
 from spineloc.utils.labelme import LabelMe
 
 
+def load_image(image_path: str) -> np.ndarray:
+    """Load image from the given path as a numpy array."""
+    from PIL import Image
+
+    image = Image.open(image_path).convert("L")
+    if image is None:
+        raise FileNotFoundError(f"Image not found at path: {image_path}")
+    return np.array(image)
+
+
+class RadiographView(Enum):
+    FRONTAL = 0
+    LATERAL_LEFT = 1
+    LATERAL_RIGHT = 2
+
+
 class SpineRadiograph:
     """
-    Spine radiograph with patient specific coordinate system.
+    Spine radiograph with patient specific anatomical coordinate system.
 
     Coordinate system is defined by:
     origin: mid-point between C7 and S1 vertebrae in image coordinates (pixels)
     units: average width and height of vertebrae in pixels
     """
 
-    def __init__(self, image_path: str, origin: np.ndarray, units: np.ndarray):
+    def __init__(
+        self,
+        image_path: str,
+        image_wh: np.ndarray,
+        origin: np.ndarray,
+        units: np.ndarray,
+        view: RadiographView,
+    ):
         self.image_path = image_path
-        self.origin = origin  # np.ndarray of shape (2,)
-        self.units = units  # np.ndarray of shape (2,)
+        self.image_wh = image_wh
+        self.origin = origin  # (x, y) in pixels
+        self.units = units  # (unit_x, unit_y) in pixels
+        self.view = view
 
-    def to_labelme(self, length=10) -> LabelMe:
+    def crop(
+        self, top_y: int, top_x: int, bottom_y: int, bottom_x: int
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Crop the SpineRadiograph to the specified bounding box.
+
+        The coordinate system is adjusted accordingly.
+
+        Returns:
+            (cropped_image, coordinates)
+            cropped_image: Cropped image as numpy array
+            coordinates: New coordinates (top_y, top_x, bottom_y, bottom_x) in anatomical units
+        """
+
+        image = load_image(self.image_path)
+        cropped_image = image[top_y:bottom_y, top_x:bottom_x]
+        top_left = (np.array([top_x, top_y]) - self.origin) / self.units
+        bottom_right = (np.array([bottom_x, bottom_y]) - self.origin) / self.units
+        return cropped_image, np.array([top_left[1], top_left[0], bottom_right[1], bottom_right[0]])
+
+    def pix_to_anat(self, pix_coords: np.ndarray) -> np.ndarray:
+        """
+        Convert pixel coordinates to anatomical coordinates.
+
+        Args:
+            pix_coords: Pixel coordinates as (N, 2) array
+
+        Returns:
+            anat_coords: Anatomical coordinates as (N, 2) array
+        """
+        shifted = pix_coords - self.origin  # (N, 2)
+        anat_coords = shifted / self.units  # (N, 2)
+        return anat_coords
+
+    def anat_to_pix(self, anat_coords: np.ndarray) -> np.ndarray:
+        """
+        Convert anatomical coordinates to pixel coordinates.
+
+        Args:
+            anat_coords: Anatomical coordinates as (N, 2) array
+
+        Returns:
+            pix_coords: Pixel coordinates as (N, 2) array
+        """
+        scaled = anat_coords * self.units  # (N, 2)
+        pix_coords = scaled + self.origin  # (N, 2)
+        return pix_coords
+
+    def to_labelme(self, axis_length=5) -> LabelMe:
         """
         Convert SpineRadiograph to LabelMe format to visualize coordinate system.
 
@@ -39,7 +114,7 @@ class SpineRadiograph:
                 label="unit_x",
                 points=[
                     [float(self.origin[0]), float(self.origin[1])],
-                    [float(self.origin[0] + length * self.units[0]), float(self.origin[1])],
+                    [float(self.origin[0] + axis_length * self.units[0]), float(self.origin[1])],
                 ],
                 group_id=None,
                 shape_type="line",
@@ -52,7 +127,7 @@ class SpineRadiograph:
                 label="unit_y",
                 points=[
                     [float(self.origin[0]), float(self.origin[1])],
-                    [float(self.origin[0]), float(self.origin[1] + length * self.units[1])],
+                    [float(self.origin[0]), float(self.origin[1] + axis_length * self.units[1])],
                 ],
                 group_id=None,
                 shape_type="line",
@@ -93,7 +168,7 @@ class SpineRadiograph:
 
         corner_points = np.array(
             [points["TL"][:-1], points["TR"][:-1], points["BL"], points["BR"]],
-        )[:, :, 0]  # (tl/tr,bl/br, vertebrae, xy)
+        )[:, :, 0]  # (tl/tr/bl/br, vertebrae, xy)
         corner_points = corner_points.transpose(1, 0, 2)  # (vertebrae, tl/tr/bl/br, xy)
 
         c7 = corner_points[0]
@@ -103,18 +178,31 @@ class SpineRadiograph:
         mean_width = np.mean(
             np.concatenate(
                 [
-                    corner_points[:, 1] - corner_points[:, 0],  # TR - TL
-                    corner_points[:, 3] - corner_points[:, 2],  # BR - BL
+                    np.linalg.norm(corner_points[:, 1] - corner_points[:, 0], axis=1),  # TR - TL
+                    np.linalg.norm(corner_points[:, 3] - corner_points[:, 2], axis=1),  # BR - BL
                 ],
             )
         )
         mean_height = np.mean(
             np.concatenate(
                 [
-                    corner_points[:, 2] - corner_points[:, 0],  # BL - TL
-                    corner_points[:, 3] - corner_points[:, 1],  # BR - TR
+                    np.linalg.norm(corner_points[:, 2] - corner_points[:, 0], axis=1),  # BL - TL
+                    np.linalg.norm(corner_points[:, 3] - corner_points[:, 1], axis=1),  # BR - TR
                 ],
             )
         )
         units = np.array([mean_width, mean_height])
-        return cls(lm.imagePath, origin, units)
+        image_wh = np.array([lm.imageWidth, lm.imageHeight])
+        frontal = lm.flags.get("frontal", False)
+        if frontal:
+            view = RadiographView.FRONTAL
+        else:
+            lateral = lm.flags.get("lateral", False)
+            if not lateral:
+                raise ValueError("LabelMe flags must indicate 'frontal' or 'lateral' view.")
+            right = lm.flags.get("right", False)
+            if right:
+                view = RadiographView.LATERAL_RIGHT
+            else:
+                view = RadiographView.LATERAL_LEFT
+        return cls(lm.imagePath, image_wh, origin, units, view)

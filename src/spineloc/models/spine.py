@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 import timm
 import torch
 import torch.nn as nn
+
 from ..models.losses import SpineLoss
 
 
@@ -10,8 +11,7 @@ class MultiTaskSpineModel(pl.LightningModule):
     Multi-task model using timm backbone and PyTorch Lightning.
     Predicts:
     1. Anatomical coordinates at each spatial position (with uncertainty)
-    2. View type (frontal/lateral) with confidence
-    3. Laterality (left/right facing for lateral views) with confidence
+    2. View type (frontal/lateral_left/lateral_right) with confidence
     """
 
     def __init__(
@@ -19,12 +19,10 @@ class MultiTaskSpineModel(pl.LightningModule):
         backbone_name="resnet50",
         pretrained=True,
         in_channels=1,
-        num_views=2,
-        num_laterality=2,
+        num_views=3,
         estimate_uncertainty=True,
         coord_weight=1.0,
         view_weight=0.5,
-        laterality_weight=0.5,
         coord_loss_type="smooth_l1",
         learning_rate=1e-4,
         weight_decay=1e-5,
@@ -65,25 +63,16 @@ class MultiTaskSpineModel(pl.LightningModule):
             nn.Linear(128, num_views),
         )
 
-        # Laterality classification head
-        self.laterality_classifier = nn.Sequential(
-            nn.Linear(feature_dim, 128),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.5),
-            nn.Linear(128, num_laterality),
-        )
-
         # Loss function
         self.compute_loss = SpineLoss(
             coord_loss_type=coord_loss_type,
             coord_weight=coord_weight,
             view_weight=view_weight,
-            laterality_weight=laterality_weight,
         )
 
         # Metrics tracking
-        self.train_metrics = {"coord": [], "view": [], "laterality": []}
-        self.val_metrics = {"coord": [], "view": [], "laterality": []}
+        self.train_metrics = {"coord": [], "view": []}
+        self.val_metrics = {"coord": [], "view": []}
 
     def forward(self, x):
         """
@@ -94,7 +83,6 @@ class MultiTaskSpineModel(pl.LightningModule):
             coord_map: Predicted coordinates (B, 2, h, w)
             coord_log_var: Coordinate uncertainty (B, 2, h, w) or None
             view_logits: View classification logits (B, num_views)
-            laterality_logits: Laterality classification logits (B, num_laterality)
         """
         # Extract features using timm backbone
         features = self.backbone(x)  # (B, feature_dim, h, w)
@@ -114,9 +102,8 @@ class MultiTaskSpineModel(pl.LightningModule):
 
         # Classifications
         view_logits = self.view_classifier(global_feat)
-        laterality_logits = self.laterality_classifier(global_feat)
 
-        return coord_map, coord_log_var, view_logits, laterality_logits
+        return coord_map, coord_log_var, view_logits
 
     def predict_bounding_box(self, coord_map, coord_log_var=None):
         """Extract bounding box using min/max operations."""
@@ -143,46 +130,36 @@ class MultiTaskSpineModel(pl.LightningModule):
         return boxes, uncertainties
 
     def shared_step(self, batch, batch_idx, log_prefix: str):
-        images, coords, view_ids, laterality_ids = batch
+        images, coords, view_ids = batch
 
         # Forward pass
-        coord_map, coord_log_var, view_logits, laterality_logits = self(images)
+        coord_map, coord_log_var, view_logits = self(images)
 
         # Generate targets
         _, _, h, w = coord_map.shape
         target_coords = generate_coordinate_targets(coords, (h, w))
 
         # Compute loss
-        total_loss, coord_loss, view_loss, lat_loss = self.compute_loss(
+        (
+            total_loss,
+            coord_loss,
+            view_loss,
+        ) = self.compute_loss(
             coord_map,
             target_coords,
             view_logits,
             view_ids,
-            laterality_logits,
-            laterality_ids,
             coord_log_var,
         )
 
         # Compute metrics
         view_acc = (view_logits.argmax(dim=1) == view_ids).float().mean()
 
-        lateral_mask = laterality_ids >= 0
-        if lateral_mask.sum() > 0:
-            lat_acc = (
-                (laterality_logits[lateral_mask].argmax(dim=1) == laterality_ids[lateral_mask])
-                .float()
-                .mean()
-            )
-        else:
-            lat_acc = torch.tensor(0.0)
-
         # Log metrics
         self.log(f"{log_prefix}/loss", total_loss, on_step=True, on_epoch=True, prog_bar=True)
         self.log(f"{log_prefix}/coord_loss", coord_loss, on_step=False, on_epoch=True)
         self.log(f"{log_prefix}/view_loss", view_loss, on_step=False, on_epoch=True)
-        self.log(f"{log_prefix}/lat_loss", lat_loss, on_step=False, on_epoch=True)
         self.log(f"{log_prefix}/view_acc", view_acc, on_step=False, on_epoch=True)
-        self.log(f"{log_prefix}/lat_acc", lat_acc, on_step=False, on_epoch=True)
 
         return total_loss
 
@@ -210,7 +187,15 @@ class MultiTaskSpineModel(pl.LightningModule):
 
 
 def generate_coordinate_targets(coords, feature_map_size):
-    """Generate interpolated coordinate targets."""
+    """Generate interpolated coordinate targets.
+
+    Args:
+        coords: Ground truth bounding boxes (B, 4) in (top_y, top_x, bottom_y, bottom_x) format
+        feature_map_size: Size of the feature map (h, w)
+
+    Returns:
+        targets: Interpolated coordinate targets (B, 2, h, w)
+    """
     B = coords.shape[0]
     h, w = feature_map_size
     device = coords.device

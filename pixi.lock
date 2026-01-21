@@ -2403,7 +2403,7 @@ packages:
 - pypi: ./
   name: spineloc
   version: 0.1.0
-  sha256: 038b6c1be828cc85c59bd1bc7193a3096d5de65278de00a120ccbdab9740b37d
+  sha256: cdd5078fd749756b5918fc34062c471632e7cc8c2027702380fb7a36caa2d196
   requires_python: '>=3.11'
 - conda: https://conda.anaconda.org/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
   sha256: 570da295d421661af487f1595045760526964f41471021056e993e73089e9c41

@@ -4,7 +4,8 @@ from typing import Any, Callable, DefaultDict, Dict, List, Optional, Set, Union
 
 import numpy as np
 from pydantic import BaseModel
-from szkspyne.type import LineMixin
+
+from .mixins import LineMixin
 
 
 class LabelMe(BaseModel):
@@ -159,7 +160,7 @@ class ShapeDict(BaseModel):
         return self
 
 
-class ShapeDictLine(BaseModel, LineMixin):
+class ShapeDictLine(LineMixin):
     content: ShapeDict
     filename: str
 
@@ -172,10 +173,11 @@ class ShapeDictLine(BaseModel, LineMixin):
         return LabelMeLine(content=self.content.into_labelme(), filename=self.filename)
 
 
-class LabelMeLine(BaseModel, LineMixin):
+class LabelMeLine(LineMixin):
     content: LabelMe
     filename: str
 
     def into_shape_dict_line(self) -> ShapeDictLine:
         shape_dict = self.content.into_shape_dict()
+        return ShapeDictLine(content=shape_dict, filename=self.filename)
         return ShapeDictLine(content=shape_dict, filename=self.filename)

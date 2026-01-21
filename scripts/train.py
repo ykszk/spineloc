@@ -3,6 +3,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
@@ -28,6 +29,8 @@ def load_data(data_cfg):
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def main(cfg: DictConfig):
     """Main training function with Hydra configuration."""
+
+    logger.info("Starting training with configuration:")
 
     # Print configuration
     print("=" * 60)
@@ -57,15 +60,17 @@ def main(cfg: DictConfig):
 
     # Setup logger
     if cfg.logger.name == "tensorboard":
-        logger = TensorBoardLogger(save_dir=cfg.logger.save_dir, name=cfg.logger.experiment_name)
+        training_logger = TensorBoardLogger(
+            save_dir=cfg.logger.save_dir, name=cfg.logger.experiment_name
+        )
     elif cfg.logger.name == "wandb":
-        logger = WandbLogger(
+        training_logger = WandbLogger(
             project=cfg.logger.project,
             name=cfg.logger.experiment_name,
             save_dir=cfg.logger.save_dir,
         )
     else:
-        logger = True  # Default logger
+        training_logger = True  # Default logger
 
     # Setup callbacks
     callbacks = []
@@ -89,7 +94,7 @@ def main(cfg: DictConfig):
     callbacks.append(early_stop_callback)
 
     # Create trainer
-    trainer = pl.Trainer(**cfg.trainer, logger=logger, callbacks=callbacks)
+    trainer = pl.Trainer(**cfg.trainer, logger=training_logger, callbacks=callbacks)
 
     # Train
     trainer.fit(model, dm)
@@ -146,4 +151,5 @@ def main(cfg: DictConfig):
 
 
 if __name__ == "__main__":
+    main()
     main()

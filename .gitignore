@@ -1,4 +1,5 @@
 outputs/
+data/*.ndjson
 
 # pixi environments
 .pixi/*

@@ -5,3 +5,7 @@ defaults:
   - paths: default
   - trainer: default
   - callbacks: default
+  - logger: csv
+
+
+task_name: train

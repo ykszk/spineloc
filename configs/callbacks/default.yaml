@@ -18,7 +18,7 @@ model_checkpoint:
   auto_insert_metric_name: False
 
 early_stopping:
-  patience: 100
+  patience: 32
   monitor: "${..monitor.value}"
   mode: "${..monitor.mode}"
 

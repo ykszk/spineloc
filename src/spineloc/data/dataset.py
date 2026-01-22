@@ -11,6 +11,7 @@ from spineloc.utils import pylogger
 
 from ..data.spine_radiograph import SpineRadiograph
 from ..data.transforms import was_flipped
+from ..utils.labelme import LabelMe
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)
 
@@ -106,14 +107,24 @@ class SpineDataModule(LightningDataModule):
         for data_dir in self.data_dirs:
             data_dir = data_dir
             log.info(f"Loading data from {data_dir}")
-            if not data_dir.is_dir():
+            sub_images = []
+            # ndjson
+            if data_dir.suffix == ".ndjson":
+                with open(data_dir, "r") as f:
+                    for line in f:
+                        lm = LabelMe.model_validate_json(line.strip())
+                        sr = SpineRadiograph.from_labelme(lm)
+                        sub_images.append(sr)
+                log.info(f"Loaded {len(sub_images)} json lines from {data_dir}")
+                spine_images.extend(sub_images)
                 continue
-            count = 0
+            if not data_dir.is_dir():
+                raise ValueError(f"Data directory {data_dir} is not a directory or ndjson.")
             for json_path in data_dir.glob("*.json"):
                 sr = SpineRadiograph.from_labelme_file(json_path)
-                spine_images.append(sr)
-                count += 1
-            log.info(f"Loaded {count} json files from {data_dir}")
+                sub_images.append(sr)
+            log.info(f"Loaded {len(sub_images)} json files from {data_dir}")
+            spine_images.extend(sub_images)
         log.info(f"Total loaded spine images: {len(spine_images)}")
 
         num_val = int(len(spine_images) * self.val_split)

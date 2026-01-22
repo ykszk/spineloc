@@ -1,5 +1,6 @@
 outputs/
 data/*.ndjson
+local.yaml
 
 # pixi environments
 .pixi/*

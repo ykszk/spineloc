@@ -15,7 +15,11 @@ Multi-task deep learning model for spine X-ray coordinate regression.
 - cd to the project directory
 - Run `pixi install`
 
-## Test
+## Train
+- cpu: `pixi run train`
+- gpu: `pixi run -e gpu train trainer=gpu data=gpu`
+
+## Software Test
 - (If it's the first time) Run `pixi install --environment test`
 - Run `pixi run test`
   - Run `TEST_VIS=1 pixi run test -s` to run optional tests

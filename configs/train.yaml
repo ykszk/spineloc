@@ -6,6 +6,7 @@ defaults:
   - trainer: default
   - callbacks: default
   - logger: csv
+  - hydra: default
 
 
 task_name: train

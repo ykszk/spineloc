@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import Path
 
 import numpy as np
 
@@ -217,3 +218,11 @@ class SpineRadiograph:
             else:
                 view = RadiographView.LATERAL_LEFT
         return cls(lm.imagePath, image_wh, origin, units, view)
+
+    @classmethod
+    def from_labelme_file(cls, json_path: Path | str) -> "SpineRadiograph":
+        """Create SpineRadiograph from LabelMe JSON file."""
+        json_path = Path(json_path)
+        lm = LabelMe.from_file(json_path)
+        lm.resolve_image_path(json_path.parent)
+        return cls.from_labelme(lm)

@@ -1,12 +1,81 @@
-import pytorch_lightning as pl
+from typing import Any, Dict
+
 import timm
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from lightning import LightningModule
 
-from ..models.losses import SpineLoss
+from spineloc.utils import pylogger
+
+log = pylogger.RankedLogger(__name__, rank_zero_only=True)
 
 
-class MultiTaskSpineModel(pl.LightningModule):
+class SpineLoss:
+    def __init__(
+        self,
+        coord_loss_type="l2",
+        coord_weight=1.0,
+        view_weight=1.0,
+    ):
+        assert coord_loss_type in ["l2", "smooth_l1", "l1"], "Unsupported coordinate loss type."
+        self.coord_loss_type = coord_loss_type
+        self.coord_weight = coord_weight
+        self.view_weight = view_weight
+
+        # coordinate loss function without uncertainty
+        if self.coord_loss_type == "smooth_l1":
+            self.coord_loss_func = F.smooth_l1_loss
+        elif self.coord_loss_type == "l1":
+            self.coord_loss_func = F.l1_loss
+        else:
+            self.coord_loss_func = F.mse_loss
+
+        # coordinate loss function with uncertainty
+        if self.coord_loss_type == "l2":
+
+            def coord_loss_with_uncertainty(pred_coords, target_coords, coord_log_var):
+                precision = torch.exp(-coord_log_var)
+                sq_diff = (pred_coords - target_coords) ** 2
+                return torch.mean(0.5 * precision * sq_diff + 0.5 * coord_log_var)
+
+            self.coord_loss_with_uncertainty = coord_loss_with_uncertainty
+        else:
+
+            def coord_loss_with_uncertainty(pred_coords, target_coords, coord_log_var):
+                precision = torch.exp(-coord_log_var)
+                if self.coord_loss_type == "smooth_l1":
+                    diff = F.smooth_l1_loss(pred_coords, target_coords, reduction="none")
+                else:
+                    diff = torch.abs(pred_coords - target_coords)
+                return torch.mean(precision * diff + 0.5 * coord_log_var)
+
+            self.coord_loss_with_uncertainty = coord_loss_with_uncertainty
+
+    def __call__(
+        self,
+        pred_coords,
+        target_coords,
+        view_logits,
+        target_views,
+        coord_log_var=None,
+    ):
+        """Compute multi-task loss."""
+        # Coordinate loss with uncertainty
+        if coord_log_var is not None:
+            coord_loss = self.coord_loss_with_uncertainty(pred_coords, target_coords, coord_log_var)
+        else:
+            coord_loss = self.coord_loss_func(pred_coords, target_coords)
+
+        # View classification loss
+        view_loss = F.cross_entropy(view_logits, target_views)
+
+        total_loss = self.coord_weight * coord_loss + self.view_weight * view_loss
+
+        return total_loss, coord_loss, view_loss
+
+
+class MultiTaskSpineModel(LightningModule):
     """
     Multi-task model using timm backbone and PyTorch Lightning.
     Predicts:
@@ -16,19 +85,18 @@ class MultiTaskSpineModel(pl.LightningModule):
 
     def __init__(
         self,
+        optimizer: torch.optim.Optimizer,
+        scheduler: torch.optim.lr_scheduler.LRScheduler,
         backbone_name="resnet50",
         pretrained=True,
         in_channels=1,
         num_views=3,
         estimate_uncertainty=True,
-        coord_weight=1.0,
-        view_weight=0.5,
-        coord_loss_type="smooth_l1",
-        learning_rate=1e-4,
-        weight_decay=1e-5,
+        cls_mid_dim=128,
+        loss=SpineLoss(),
     ):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["loss"])
 
         # Create timm backbone
         self.backbone = timm.create_model(
@@ -43,7 +111,8 @@ class MultiTaskSpineModel(pl.LightningModule):
         with torch.no_grad():
             dummy_input = torch.zeros(1, in_channels, 512, 256)
             features = self.backbone(dummy_input)
-            feature_dim = features[0].shape[1]
+            feature_dim = features[0].shape[0]
+            log.info(f"Backbone feature dimension: {feature_dim}")
 
         # Coordinate regression head
         self.coord_head = nn.Conv2d(feature_dim, 2, kernel_size=1)
@@ -57,18 +126,14 @@ class MultiTaskSpineModel(pl.LightningModule):
 
         # View classification head
         self.view_classifier = nn.Sequential(
-            nn.Linear(feature_dim, 128),
+            nn.Linear(feature_dim, cls_mid_dim),
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
-            nn.Linear(128, num_views),
+            nn.Linear(cls_mid_dim, num_views),
         )
 
         # Loss function
-        self.compute_loss = SpineLoss(
-            coord_loss_type=coord_loss_type,
-            coord_weight=coord_weight,
-            view_weight=view_weight,
-        )
+        self.loss = loss
 
         # Metrics tracking
         self.train_metrics = {"coord": [], "view": []}
@@ -144,7 +209,7 @@ class MultiTaskSpineModel(pl.LightningModule):
             total_loss,
             coord_loss,
             view_loss,
-        ) = self.compute_loss(
+        ) = self.loss(
             coord_map,
             target_coords,
             view_logits,
@@ -169,20 +234,17 @@ class MultiTaskSpineModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         return self.shared_step(batch, batch_idx, log_prefix="val")
 
-    def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(
-            self.parameters(),
-            lr=self.hparams.learning_rate,
-            weight_decay=self.hparams.weight_decay,
-        )
-
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="min", factor=0.5, patience=5, verbose=True
-        )
-
+    def configure_optimizers(self) -> Dict[str, Any]:
+        optimizer = self.hparams.optimizer(params=self.parameters())
+        scheduler = self.hparams.scheduler(optimizer=optimizer)
         return {
             "optimizer": optimizer,
-            "lr_scheduler": {"scheduler": scheduler, "monitor": "val/loss"},
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val/loss",
+                "interval": "epoch",
+                "frequency": 1,
+            },
         }
 
 

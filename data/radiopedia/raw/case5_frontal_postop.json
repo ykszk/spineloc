@@ -1,13 +1,13 @@
 {
   "version": "5.0.1",
-  "flags": {"frontal": true},
+  "flags": {"frontal":true},
   "shapes": [
     {
       "label": "TL",
       "points": [
         [
-          178.5,
-          139.5
+          179.7,
+          132.5
         ]
       ],
       "group_id": null,
@@ -18,8 +18,8 @@
       "label": "TL",
       "points": [
         [
-          181.5,
-          154.5
+          179.7,
+          152.38
         ]
       ],
       "group_id": null,
@@ -30,8 +30,8 @@
       "label": "TL",
       "points": [
         [
-          184.48735,
-          172.65233
+          179.7,
+          175.56
         ]
       ],
       "group_id": null,
@@ -42,8 +42,8 @@
       "label": "TL",
       "points": [
         [
-          184.5,
-          190.5
+          176.39,
+          199.58
         ]
       ],
       "group_id": null,
@@ -54,8 +54,8 @@
       "label": "TL",
       "points": [
         [
-          184.5,
-          208.5
+          169.77,
+          222.77
         ]
       ],
       "group_id": null,
@@ -66,8 +66,8 @@
       "label": "TL",
       "points": [
         [
-          181.00647,
-          227.30235
+          159.83,
+          249.27
         ]
       ],
       "group_id": null,
@@ -78,8 +78,8 @@
       "label": "TL",
       "points": [
         [
-          172.5,
-          244.5
+          143.27,
+          272.45
         ]
       ],
       "group_id": null,
@@ -90,8 +90,8 @@
       "label": "TL",
       "points": [
         [
-          166.5,
-          265.5
+          133.33,
+          298.95
         ]
       ],
       "group_id": null,
@@ -102,8 +102,8 @@
       "label": "TL",
       "points": [
         [
-          160.5,
-          289.5
+          130.02,
+          328.77
         ]
       ],
       "group_id": null,
@@ -114,8 +114,8 @@
       "label": "TL",
       "points": [
         [
-          154.5,
-          313.5
+          133.33,
+          358.58
         ]
       ],
       "group_id": null,
@@ -126,8 +126,8 @@
       "label": "TL",
       "points": [
         [
-          154.5,
-          337.5
+          143.27,
+          388.39
         ]
       ],
       "group_id": null,
@@ -138,8 +138,8 @@
       "label": "TL",
       "points": [
         [
-          154.5,
-          365.25
+          153.2,
+          419.03
         ]
       ],
       "group_id": null,
@@ -150,8 +150,8 @@
       "label": "TL",
       "points": [
         [
-          159.75,
-          395.25
+          166.45,
+          452.16
         ]
       ],
       "group_id": null,
@@ -162,8 +162,8 @@
       "label": "TL",
       "points": [
         [
-          166.5,
-          424.5
+          173.08,
+          481.97
         ]
       ],
       "group_id": null,
@@ -174,8 +174,8 @@
       "label": "TL",
       "points": [
         [
-          175.5,
-          452.25
+          177.22,
+          511.78
         ]
       ],
       "group_id": null,
@@ -186,8 +186,8 @@
       "label": "TL",
       "points": [
         [
-          184.5,
-          482.25
+          176.39,
+          548.22
         ]
       ],
       "group_id": null,
@@ -198,8 +198,8 @@
       "label": "TL",
       "points": [
         [
-          190.5,
-          512.25
+          169.77,
+          587.97
         ]
       ],
       "group_id": null,
@@ -210,8 +210,8 @@
       "label": "TL",
       "points": [
         [
-          196.5,
-          536.25
+          159.83,
+          625.23
         ]
       ],
       "group_id": null,
@@ -222,8 +222,8 @@
       "label": "TL",
       "points": [
         [
-          196.5,
-          551.25
+          153.2,
+          658.36
         ]
       ],
       "group_id": null,
@@ -234,8 +234,8 @@
       "label": "TR",
       "points": [
         [
-          202.5,
-          138.75
+          206.2,
+          133.33
         ]
       ],
       "group_id": null,
@@ -246,8 +246,8 @@
       "label": "TR",
       "points": [
         [
-          202.5,
-          153.75
+          206.2,
+          153.2
         ]
       ],
       "group_id": null,
@@ -258,8 +258,8 @@
       "label": "TR",
       "points": [
         [
-          202.9361,
-          171.25996
+          206.2,
+          176.39
         ]
       ],
       "group_id": null,
@@ -270,8 +270,8 @@
       "label": "TR",
       "points": [
         [
-          205.49966,
-          191.2362
+          203.72,
+          202.89
         ]
       ],
       "group_id": null,
@@ -282,8 +282,8 @@
       "label": "TR",
       "points": [
         [
-          202.5,
-          211.5
+          199.58,
+          229.39
         ]
       ],
       "group_id": null,
@@ -294,8 +294,8 @@
       "label": "TR",
       "points": [
         [
-          199.5,
-          232.5
+          187.16,
+          259.2
         ]
       ],
       "group_id": null,
@@ -306,8 +306,8 @@
       "label": "TR",
       "points": [
         [
-          193.5,
-          250.5
+          176.39,
+          282.39
         ]
       ],
       "group_id": null,
@@ -318,8 +318,8 @@
       "label": "TR",
       "points": [
         [
-          187.5,
-          271.5
+          166.45,
+          308.89
         ]
       ],
       "group_id": null,
@@ -330,8 +330,8 @@
       "label": "TR",
       "points": [
         [
-          184.5,
-          292.5
+          166.45,
+          329.59
         ]
       ],
       "group_id": null,
@@ -342,8 +342,8 @@
       "label": "TR",
       "points": [
         [
-          181.5,
-          313.5
+          169.77,
+          355.27
         ]
       ],
       "group_id": null,
@@ -354,8 +354,8 @@
       "label": "TR",
       "points": [
         [
-          181.5,
-          337.5
+          177.22,
+          381.77
         ]
       ],
       "group_id": null,
@@ -366,8 +366,8 @@
       "label": "TR",
       "points": [
         [
-          184.5,
-          361.5
+          189.64,
+          408.27
         ]
       ],
       "group_id": null,
@@ -378,8 +378,8 @@
       "label": "TR",
       "points": [
         [
-          190.5,
-          388.5
+          202.89,
+          441.39
         ]
       ],
       "group_id": null,
@@ -390,8 +390,8 @@
       "label": "TR",
       "points": [
         [
-          199.5,
-          415.5
+          213.66,
+          475.34
         ]
       ],
       "group_id": null,
@@ -402,8 +402,8 @@
       "label": "TR",
       "points": [
         [
-          208.5,
-          443.25
+          219.45,
+          511.78
         ]
       ],
       "group_id": null,
@@ -414,8 +414,8 @@
       "label": "TR",
       "points": [
         [
-          220.5,
-          476.25
+          222.77,
+          554.84
         ]
       ],
       "group_id": null,
@@ -426,8 +426,8 @@
       "label": "TR",
       "points": [
         [
-          229.5,
-          509.25
+          216.97,
+          594.59
         ]
       ],
       "group_id": null,
@@ -438,8 +438,8 @@
       "label": "TR",
       "points": [
         [
-          232.5,
-          536.25
+          209.52,
+          634.34
         ]
       ],
       "group_id": null,
@@ -450,8 +450,8 @@
       "label": "TR",
       "points": [
         [
-          232.5,
-          552.0
+          201.46,
+          664.08
         ]
       ],
       "group_id": null,
@@ -462,8 +462,8 @@
       "label": "BL",
       "points": [
         [
-          181.5,
-          151.5
+          179.7,
+          146.58
         ]
       ],
       "group_id": null,
@@ -474,8 +474,8 @@
       "label": "BL",
       "points": [
         [
-          183.75,
-          168.75
+          179.7,
+          169.77
         ]
       ],
       "group_id": null,
@@ -486,8 +486,8 @@
       "label": "BL",
       "points": [
         [
-          184.5,
-          184.5
+          176.39,
+          192.95
         ]
       ],
       "group_id": null,
@@ -498,8 +498,8 @@
       "label": "BL",
       "points": [
         [
-          184.5,
-          205.5
+          173.08,
+          218.62
         ]
       ],
       "group_id": null,
@@ -510,8 +510,8 @@
       "label": "BL",
       "points": [
         [
-          181.5,
-          223.5
+          159.83,
+          242.64
         ]
       ],
       "group_id": null,
@@ -522,8 +522,8 @@
       "label": "BL",
       "points": [
         [
-          175.5,
-          241.5
+          146.58,
+          265.83
         ]
       ],
       "group_id": null,
@@ -534,8 +534,8 @@
       "label": "BL",
       "points": [
         [
-          167.43098,
-          260.02277
+          133.33,
+          293.16
         ]
       ],
       "group_id": null,
@@ -546,8 +546,8 @@
       "label": "BL",
       "points": [
         [
-          162.55772,
-          281.6043
+          130.02,
+          322.14
         ]
       ],
       "group_id": null,
@@ -558,8 +558,8 @@
       "label": "BL",
       "points": [
         [
-          157.5,
-          305.25
+          132.91,
+          351.95
         ]
       ],
       "group_id": null,
@@ -570,8 +570,8 @@
       "label": "BL",
       "points": [
         [
-          154.5,
-          331.5
+          139.95,
+          381.77
         ]
       ],
       "group_id": null,
@@ -582,8 +582,8 @@
       "label": "BL",
       "points": [
         [
-          154.5,
-          358.5
+          149.89,
+          412.41
         ]
       ],
       "group_id": null,
@@ -594,8 +594,8 @@
       "label": "BL",
       "points": [
         [
-          157.5,
-          386.25
+          163.14,
+          442.22
         ]
       ],
       "group_id": null,
@@ -606,8 +606,8 @@
       "label": "BL",
       "points": [
         [
-          163.5,
-          416.25
+          173.08,
+          474.52
         ]
       ],
       "group_id": null,
@@ -618,8 +618,8 @@
       "label": "BL",
       "points": [
         [
-          172.5,
-          446.25
+          176.39,
+          505.16
         ]
       ],
       "group_id": null,
@@ -630,8 +630,8 @@
       "label": "BL",
       "points": [
         [
-          181.5,
-          476.25
+          176.39,
+          541.59
         ]
       ],
       "group_id": null,
@@ -642,8 +642,8 @@
       "label": "BL",
       "points": [
         [
-          187.5,
-          506.25
+          170.59,
+          578.03
         ]
       ],
       "group_id": null,
@@ -654,8 +654,8 @@
       "label": "BL",
       "points": [
         [
-          193.5,
-          533.25
+          163.14,
+          617.78
         ]
       ],
       "group_id": null,
@@ -666,8 +666,8 @@
       "label": "BL",
       "points": [
         [
-          196.5,
-          548.25
+          153.2,
+          650.91
         ]
       ],
       "group_id": null,
@@ -678,8 +678,8 @@
       "label": "BR",
       "points": [
         [
-          202.5,
-          150.75
+          206.2,
+          149.06
         ]
       ],
       "group_id": null,
@@ -690,8 +690,8 @@
       "label": "BR",
       "points": [
         [
-          205.49966,
-          167.63983
+          206.2,
+          169.77
         ]
       ],
       "group_id": null,
@@ -702,8 +702,8 @@
       "label": "BR",
       "points": [
         [
-          204.79532,
-          184.5447
+          203.72,
+          196.27
         ]
       ],
       "group_id": null,
@@ -714,8 +714,8 @@
       "label": "BR",
       "points": [
         [
-          203.63228,
-          207.46126
+          200.41,
+          226.08
         ]
       ],
       "group_id": null,
@@ -726,8 +726,8 @@
       "label": "BR",
       "points": [
         [
-          199.5,
-          226.5
+          190.47,
+          252.58
         ]
       ],
       "group_id": null,
@@ -738,8 +738,8 @@
       "label": "BR",
       "points": [
         [
-          196.5,
-          247.5
+          179.7,
+          279.08
         ]
       ],
       "group_id": null,
@@ -750,8 +750,8 @@
       "label": "BR",
       "points": [
         [
-          190.40488,
-          267.68073
+          169.77,
+          302.27
         ]
       ],
       "group_id": null,
@@ -762,8 +762,8 @@
       "label": "BR",
       "points": [
         [
-          184.5,
-          286.5
+          166.45,
+          325.45
         ]
       ],
       "group_id": null,
@@ -774,8 +774,8 @@
       "label": "BR",
       "points": [
         [
-          182.70746,
-          308.33755
+          166.45,
+          348.64
         ]
       ],
       "group_id": null,
@@ -786,8 +786,8 @@
       "label": "BR",
       "points": [
         [
-          181.5,
-          331.5
+          176.39,
+          375.14
         ]
       ],
       "group_id": null,
@@ -798,8 +798,8 @@
       "label": "BR",
       "points": [
         [
-          184.5,
-          355.5
+          187.16,
+          401.64
         ]
       ],
       "group_id": null,
@@ -810,8 +810,8 @@
       "label": "BR",
       "points": [
         [
-          190.5,
-          380.25
+          200.41,
+          432.28
         ]
       ],
       "group_id": null,
@@ -822,8 +822,8 @@
       "label": "BR",
       "points": [
         [
-          196.5,
-          407.25
+          212.83,
+          465.41
         ]
       ],
       "group_id": null,
@@ -834,8 +834,8 @@
       "label": "BR",
       "points": [
         [
-          205.5,
-          436.5
+          216.97,
+          501.84
         ]
       ],
       "group_id": null,
@@ -846,8 +846,8 @@
       "label": "BR",
       "points": [
         [
-          217.5,
-          464.25
+          220.28,
+          541.59
         ]
       ],
       "group_id": null,
@@ -858,8 +858,8 @@
       "label": "BR",
       "points": [
         [
-          226.5,
-          497.25
+          219.45,
+          584.66
         ]
       ],
       "group_id": null,
@@ -870,8 +870,8 @@
       "label": "BR",
       "points": [
         [
-          232.5,
-          530.25
+          210.34,
+          627.72
         ]
       ],
       "group_id": null,
@@ -882,128 +882,8 @@
       "label": "BR",
       "points": [
         [
-          232.5,
-          548.25
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "Shoulder",
-      "points": [
-        [
-          334.78787,
-          155.8794
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "Shoulder",
-      "points": [
-        [
-          53.60626,
-          168.1744
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "Clavicle",
-      "points": [
-        [
-          296.29913,
-          158.55223
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "Clavicle",
-      "points": [
-        [
-          92.09499,
-          171.38179
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "Pelvis",
-      "points": [
-        [
-          184.5,
-          551.25
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "Pelvis",
-      "points": [
-        [
-          241.5,
-          554.25
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "Iliac",
-      "points": [
-        [
-          121.5,
-          521.25
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "Iliac",
-      "points": [
-        [
-          298.33682,
-          528.1376
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "FemoralHead",
-      "points": [
-        [
-          124.5,
-          633.0
-        ]
-      ],
-      "group_id": null,
-      "shape_type": "point",
-      "flags": {}
-    },
-    {
-      "label": "FemoralHead",
-      "points": [
-        [
-          291.68445,
-          640.11914
+          202.89,
+          657.53
         ]
       ],
       "group_id": null,
@@ -1011,8 +891,8 @@
       "flags": {}
     }
   ],
-  "imagePath": "frontal.jpg",
+  "imagePath": "case5_frontal_postop.jpg",
   "imageData": null,
-  "imageHeight": 768,
-  "imageWidth": 425
+  "imageHeight": 848,
+  "imageWidth": 360
 }

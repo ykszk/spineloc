@@ -1,0 +1,7 @@
+defaults:
+  - _self_
+  - data: default
+  - model: default
+  - paths: default
+  - trainer: default
+  - callbacks: default

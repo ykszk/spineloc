@@ -1,11 +1,18 @@
+from pathlib import Path
 from typing import Optional
 
 import albumentations as A
 import numpy as np
-from torch.utils.data import Dataset
+from lightning import LightningDataModule
+from torch.utils.data import DataLoader, Dataset
+
+from spineloc.data import transforms
+from spineloc.utils import pylogger
 
 from ..data.spine_radiograph import SpineRadiograph
 from ..data.transforms import was_flipped
+
+log = pylogger.RankedLogger(__name__, rank_zero_only=True)
 
 
 class SpineCoordinateDataset(Dataset):
@@ -73,3 +80,76 @@ class SpineCoordinateDataset(Dataset):
         view_id = view.value
 
         return crop_img, anat_coords, view_id
+
+
+class SpineDataModule(LightningDataModule):
+    """PyTorch Lightning DataModule for spine coordinate dataset."""
+
+    def __init__(
+        self,
+        data_dirs=["data/"],
+        batch_size=64,
+        num_workers=0,
+        val_split=0.2,
+        pin_memory=False,
+    ):
+        super().__init__()
+        self.data_dirs = [Path(d) for d in data_dirs]
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.val_split = val_split
+        self.pin_memory = pin_memory
+        self.data_loaded = False
+
+    def setup(self, stage: Optional[str] = None) -> None:
+        spine_images = []
+        for data_dir in self.data_dirs:
+            data_dir = data_dir
+            log.info(f"Loading data from {data_dir}")
+            if not data_dir.is_dir():
+                continue
+            count = 0
+            for json_path in data_dir.glob("*.json"):
+                sr = SpineRadiograph.from_labelme_file(json_path)
+                spine_images.append(sr)
+                count += 1
+            log.info(f"Loaded {count} json files from {data_dir}")
+        log.info(f"Total loaded spine images: {len(spine_images)}")
+
+        num_val = int(len(spine_images) * self.val_split)
+        num_train = len(spine_images) - num_val
+
+        train_images = spine_images[:num_train]
+        val_images = spine_images[num_train:]
+
+        self.train_dataset = SpineCoordinateDataset(
+            train_images,
+            transform=transforms.get_train_transforms_with_replay(),
+        )
+        self.val_dataset = SpineCoordinateDataset(
+            val_images,
+            transform=transforms.get_val_transforms(),
+        )
+        self.data_loaded = True
+
+    def train_dataloader(self):
+        if not self.data_loaded:
+            self.setup()
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            shuffle=True,
+        )
+
+    def val_dataloader(self):
+        if not self.data_loaded:
+            self.setup()
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            shuffle=False,
+        )

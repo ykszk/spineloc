@@ -1,0 +1,27 @@
+_target_: spineloc.models.spine.MultiTaskSpineModel
+
+backbone_name: mobilenetv3_large_100
+pretrained: true
+in_channels: 1
+num_views: 3
+estimate_uncertainty: true
+cls_mid_dim: 128
+
+loss:
+  _target_: spineloc.models.spine.SpineLoss
+  coord_loss_type: smooth_l1
+  coord_weight: 1.0
+  view_weight: 1.0
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 0.001
+  weight_decay: 0.0
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.1
+  patience: 10

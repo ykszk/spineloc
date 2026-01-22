@@ -7,7 +7,7 @@ from PIL import Image
 
 import spineloc.data.transforms as transforms
 from spineloc.data import spine_radiograph
-from spineloc.data.dataset import SpineCoordinateDataset
+from spineloc.data.dataset import SpineCoordinateDataset, SpineDataModule
 from spineloc.utils.labelme import LabelMe
 
 
@@ -117,3 +117,16 @@ def test_val_dataset(spine_radiograph_dir):
 
     output_dir = spine_radiograph_dir / "val"
     save_dataset(dataset, output_dir)
+
+
+def test_data_module():
+    data_module = SpineDataModule(
+        data_dirs=[str(data_dir() / "radiopedia/raw")], batch_size=2, num_workers=0, val_split=0.5
+    )
+    data_module.setup()
+    assert data_module.data_loaded
+    assert len(data_module.train_dataset) > 0
+    assert len(data_module.val_dataset) > 0
+
+    train_loader = data_module.train_dataloader()
+    batch = next(iter(train_loader))

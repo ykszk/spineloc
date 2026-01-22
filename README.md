@@ -22,4 +22,4 @@ Multi-task deep learning model for spine X-ray coordinate regression.
 ## Software Test
 - (If it's the first time) Run `pixi install --environment test`
 - Run `pixi run test`
-  - Run `TEST_VIS=1 pixi run test -s` to run optional tests
+  - Run `pixel run text_visual -vs` to run visualization test

@@ -25,10 +25,7 @@ def spine_radiograph_dir(tmp_path_factory) -> Path:
     return fn
 
 
-SKIP_REASON = "This test is for visual inspection. Run with `TEST_VIS=1` to enable."
-
-
-@pytest.mark.skipif(not os.getenv("TEST_VIS"), reason=SKIP_REASON)
+@pytest.mark.visualize
 def test_spine_radiograph_from_labelme(spine_radiograph_dir):
     def inner(filename: str, is_frontal: bool):
         json_path = data_dir() / f"radiopedia/raw/{filename}"
@@ -50,8 +47,8 @@ def test_spine_radiograph_from_labelme(spine_radiograph_dir):
         with open(output_path, "w") as f:
             f.write(spine_lm.model_dump_json(indent=2))
 
-    inner("frontal.json", is_frontal=True)
-    inner("lateral.json", is_frontal=False)
+    inner("case1_frontal.json", is_frontal=True)
+    inner("case1_lateral.json", is_frontal=False)
 
 
 def load_instances():
@@ -84,7 +81,7 @@ def save_dataset(dataset: SpineCoordinateDataset, output_dir: Path):
             f.write(f"coord: {anat_coords}\n")
 
 
-@pytest.mark.skipif(not os.getenv("TEST_VIS"), reason=SKIP_REASON)
+@pytest.mark.visualize
 def test_spine_cropped_dataset(spine_radiograph_dir):
     instances = load_instances()
 
@@ -95,7 +92,7 @@ def test_spine_cropped_dataset(spine_radiograph_dir):
     save_dataset(dataset, output_dir)
 
 
-@pytest.mark.skipif(not os.getenv("TEST_VIS"), reason=SKIP_REASON)
+@pytest.mark.visualize
 def test_train_dataset(spine_radiograph_dir):
     instances = load_instances()
 
@@ -108,7 +105,7 @@ def test_train_dataset(spine_radiograph_dir):
     save_dataset(dataset, output_dir)
 
 
-@pytest.mark.skipif(not os.getenv("TEST_VIS"), reason=SKIP_REASON)
+@pytest.mark.visualize
 def test_val_dataset(spine_radiograph_dir):
     instances = load_instances()
 

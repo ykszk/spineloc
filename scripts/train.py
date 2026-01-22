@@ -1,6 +1,7 @@
 from typing import List
 
 import hydra
+import lightning as L
 from lightning import Callback, Trainer
 from lightning.pytorch.loggers import Logger
 from loguru import logger as log
@@ -52,5 +53,4 @@ def main(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-    main()
     main()

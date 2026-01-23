@@ -31,7 +31,7 @@ def main(cfg: DictConfig):
         L.seed_everything(cfg.seed, workers=True)
 
     # Create Dataloader
-    transform = transforms.get_val_transforms(cfg.data.image_size)
+    transform = transforms.get_predict_transforms(cfg.data.image_size)
     dataset: InferenceImageDataset = hydra.utils.instantiate(cfg.dataset, transform=transform)
     dataloader: DataLoader = hydra.utils.instantiate(cfg.dataloader, dataset=dataset)
 

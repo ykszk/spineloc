@@ -52,8 +52,10 @@ class SpineRadiograph:
     ):
         self.image_path = image_path
         self.image_wh = image_wh
-        self.origin = origin  # (x, y) in pixels
-        self.units = units  # (unit_x, unit_y) in pixels
+        self.origin = origin
+        """(x, y) in pixels"""
+        self.units = units
+        """(unit_x, unit_y) in pixels"""
         self.view = view
 
     def crop(

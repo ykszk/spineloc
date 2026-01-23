@@ -272,7 +272,7 @@ def generate_coordinate_targets(coords, feature_map_size):
     """Generate interpolated coordinate targets.
 
     Args:
-        coords: Ground truth bounding boxes (B, 4) in (top_y, top_x, bottom_y, bottom_x) format
+        coords: Ground truth bounding boxes (B, 4) in (top_x, top_y, bottom_x, bottom_y) format
         feature_map_size: Size of the feature map (h, w)
 
     Returns:
@@ -285,15 +285,15 @@ def generate_coordinate_targets(coords, feature_map_size):
     y_grid = torch.linspace(0, 1, h, device=device).view(1, h, 1).expand(B, h, w)
     x_grid = torch.linspace(0, 1, w, device=device).view(1, 1, w).expand(B, h, w)
 
-    top_y = coords[:, 0].view(B, 1, 1)
-    top_x = coords[:, 1].view(B, 1, 1)
-    bottom_y = coords[:, 2].view(B, 1, 1)
-    bottom_x = coords[:, 3].view(B, 1, 1)
+    top_x = coords[:, 0].view(B, 1, 1)
+    top_y = coords[:, 1].view(B, 1, 1)
+    bottom_x = coords[:, 2].view(B, 1, 1)
+    bottom_y = coords[:, 3].view(B, 1, 1)
 
     target_y = top_y + (bottom_y - top_y) * y_grid
     target_x = top_x + (bottom_x - top_x) * x_grid
 
-    targets = torch.stack([target_y, target_x], dim=1)
+    targets = torch.stack([target_x, target_y], dim=1)
     return targets
 
 

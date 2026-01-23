@@ -77,8 +77,7 @@ class SpineCoordinateDataset(Dataset):
             crop_img = transformed["image"]
             if was_flipped(transformed):
                 view = view.flip()
-                anat_coords[0] *= -1  # Flip top_x coordinate
-                anat_coords[2] *= -1  # Flip bottom_x coordinate
+                anat_coords[0], anat_coords[2] = -anat_coords[2], -anat_coords[0]  # Flip x coords
 
         # Encode view
         view_id = view.value

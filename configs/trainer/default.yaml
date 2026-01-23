@@ -8,8 +8,8 @@ max_epochs: 1000
 accelerator: cpu
 devices: 1
 
-# mixed precision for extra speed-up
-# precision: 16
+# https://lightning.ai/docs/fabric/stable/fundamentals/precision.html 
+precision: 32-true
 
 # perform a validation loop every N training epochs
 check_val_every_n_epoch: 1

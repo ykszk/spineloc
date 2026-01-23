@@ -9,6 +9,7 @@ Multi-task deep learning model for spine X-ray coordinate regression.
 - Uncertainty estimation
 
 # Development
+[lightning-hydra-template](https://github.com/ashleve/lightning-hydra-template) was loosely used as the baseline.
 
 ## Setup
 - Install [pixi](https://pixi.prefix.dev/dev/)
@@ -20,6 +21,5 @@ Multi-task deep learning model for spine X-ray coordinate regression.
 - gpu: `pixi run -e gpu train trainer=gpu data=gpu`
 
 ## Software Test
-- (If it's the first time) Run `pixi install --environment test`
 - Run `pixi run test`
   - Run `pixel run text_visual -vs` to run visualization test

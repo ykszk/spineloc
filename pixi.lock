@@ -3736,7 +3736,7 @@ packages:
 - pypi: ./
   name: spineloc
   version: 0.1.0
-  sha256: d123a810a3ce3d6bf337fa75dbe6d0fcf0b96ad5955a53b7bd775f4509a6e8ac
+  sha256: e30f750318ab42475ab44f638511640dc1acde3ddb1f9a8c1aac9204d2798a1d
   requires_dist:
   - albumentationsx[headless]>=2.0.14,<3
   requires_python: '>=3.11'

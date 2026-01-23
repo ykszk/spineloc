@@ -75,7 +75,7 @@ class SpineLoss:
         return total_loss, coord_loss, view_loss
 
 
-class MultiTaskSpineModel(LightningModule):
+class MultiTaskSpineNet(torch.nn.Module):
     """
     Multi-task model using timm backbone and PyTorch Lightning.
     Predicts:
@@ -85,18 +85,16 @@ class MultiTaskSpineModel(LightningModule):
 
     def __init__(
         self,
-        optimizer: torch.optim.Optimizer,
-        scheduler: torch.optim.lr_scheduler.LRScheduler,
         backbone_name="resnet50",
         pretrained=True,
         in_channels=1,
         num_views=3,
         estimate_uncertainty=True,
         cls_mid_dim=128,
-        loss=SpineLoss(),
     ):
         super().__init__()
-        self.save_hyperparameters(ignore=["loss"])
+
+        self.estimate_uncertainty = estimate_uncertainty
 
         # Create timm backbone
         self.backbone = timm.create_model(
@@ -132,13 +130,6 @@ class MultiTaskSpineModel(LightningModule):
             nn.Linear(cls_mid_dim, num_views),
         )
 
-        # Loss function
-        self.loss = loss
-
-        # Metrics tracking
-        self.train_metrics = {"coord": [], "view": []}
-        self.val_metrics = {"coord": [], "view": []}
-
     def forward(self, x):
         """
         Args:
@@ -156,7 +147,7 @@ class MultiTaskSpineModel(LightningModule):
         coord_map = self.coord_head(features)
 
         # Coordinate uncertainty
-        if self.hparams.estimate_uncertainty:
+        if self.estimate_uncertainty:
             coord_log_var = self.coord_uncertainty_head(features)
         else:
             coord_log_var = None
@@ -170,10 +161,17 @@ class MultiTaskSpineModel(LightningModule):
 
         return coord_map, coord_log_var, view_logits
 
-    def predict_bounding_box(self, coord_map, coord_log_var=None):
+    @staticmethod
+    def predict_bounding_box(coord_map, coord_log_var=None):
         """Extract bounding box using min/max operations."""
-        B = coord_map.shape[0]
-        coord_flat = coord_map.view(B, 2, -1)
+        if coord_map.dim() == 3:  # (2, h, w)
+            B = 1
+            coord_flat = coord_map.view(1, 2, -1)
+        elif coord_map.dim() == 4:  # (B, 2, h, w)
+            B = coord_map.shape[0]
+            coord_flat = coord_map.view(B, 2, -1)
+        else:
+            raise ValueError("coord_map must be 3D or 4D tensor.")
 
         top_y = coord_flat[:, 0, :].min(dim=1)[0]
         bottom_y = coord_flat[:, 0, :].max(dim=1)[0]
@@ -193,6 +191,28 @@ class MultiTaskSpineModel(LightningModule):
             [y_uncertainty, x_uncertainty, y_uncertainty, x_uncertainty], dim=1
         )
         return boxes, uncertainties
+
+
+class MultiTaskSpineModule(LightningModule):
+    def __init__(
+        self,
+        net: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        scheduler: torch.optim.lr_scheduler.LRScheduler,
+        loss=SpineLoss(),
+        compile: bool = False,
+    ):
+        super().__init__()
+        self.save_hyperparameters(ignore=["loss"])
+        self.net = net
+        self.loss = loss
+
+    def forward(self, x):
+        return self.net(x)
+
+    def setup(self, stage: str) -> None:
+        if self.hparams.compile and stage == "fit":
+            self.net = torch.compile(self.net)
 
     def shared_step(self, batch, batch_idx, log_prefix: str):
         images, coords, view_ids = batch
@@ -275,3 +295,16 @@ def generate_coordinate_targets(coords, feature_map_size):
 
     targets = torch.stack([target_y, target_x], dim=1)
     return targets
+
+
+class InferenceModule(LightningModule):
+    def __init__(
+        self,
+        net: torch.nn.Module,
+    ):
+        super().__init__()
+        self.save_hyperparameters()
+        self.net = net
+
+    def forward(self, x):
+        return self.net(x)

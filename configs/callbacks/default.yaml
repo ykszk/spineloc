@@ -15,12 +15,11 @@ model_checkpoint:
   monitor: "${..monitor.value}"
   mode: "${..monitor.mode}"
   save_last: True
-  auto_insert_metric_name: False
 
 early_stopping:
   patience: 16
   monitor: "${..monitor.value}"
   mode: "${..monitor.mode}"
 
-# model_summary:
-#   max_depth: -1
+model_summary:
+  max_depth: 2

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 
 import hydra
@@ -6,11 +7,10 @@ from lightning import Callback, Trainer
 from lightning.pytorch.loggers import Logger
 from loguru import logger as log
 from omegaconf import DictConfig, OmegaConf
+from safetensors.torch import save_file
 
-# from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-# from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 from spineloc.data.dataset import SpineDataModule
-from spineloc.models.spine import MultiTaskSpineModel
+from spineloc.models.spine import MultiTaskSpineModule, MultiTaskSpineNet
 from spineloc.utils import (
     instantiate_callbacks,
     instantiate_loggers,
@@ -37,7 +37,11 @@ def main(cfg: DictConfig):
 
     # Create model
     log.info("Instantiating model...")
-    model: MultiTaskSpineModel = hydra.utils.instantiate(cfg.model)
+    net: MultiTaskSpineNet = hydra.utils.instantiate(cfg.model.net)
+    module: MultiTaskSpineModule = hydra.utils.instantiate(
+        cfg.model.module,
+        net=net,
+    )
 
     log.info("Instantiating callbacks...")
     callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
@@ -49,7 +53,19 @@ def main(cfg: DictConfig):
     trainer: Trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks, logger=logger)
 
     # Train
-    trainer.fit(model, datamodule)
+    trainer.fit(module, datamodule)
+
+    ckpt_path = trainer.checkpoint_callback.best_model_path
+    log.info(f"Loading best model checkpoint saved at: {ckpt_path}")
+    best_model: MultiTaskSpineModule = MultiTaskSpineModule.load_from_checkpoint(
+        ckpt_path, weights_only=False
+    )
+    safetensor_path = Path(ckpt_path).with_name("best.safetensors")
+    log.info(f"Saving best model weights in safetensors format at: {safetensor_path}")
+    save_file(
+        best_model.net.state_dict(),
+        safetensor_path,
+    )
 
 
 if __name__ == "__main__":

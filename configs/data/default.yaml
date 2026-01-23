@@ -1,5 +1,6 @@
 _target_: spineloc.data.dataset.SpineDataModule
 data_dirs: ${paths.data_dirs}
+image_size: [256, 256]
 batch_size: 32
 val_split: 0.2
 num_workers: 0

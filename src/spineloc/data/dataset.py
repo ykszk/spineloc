@@ -4,6 +4,7 @@ from typing import Optional
 import albumentations as A
 import numpy as np
 from lightning import LightningDataModule
+from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 
 from spineloc.data import transforms
@@ -91,6 +92,7 @@ class SpineDataModule(LightningDataModule):
     def __init__(
         self,
         data_dirs=["data/"],
+        image_size=(256, 256),
         batch_size=64,
         num_workers=0,
         val_split=0.2,
@@ -99,6 +101,7 @@ class SpineDataModule(LightningDataModule):
     ):
         super().__init__()
         self.data_dirs = [Path(d) for d in data_dirs]
+        self.image_size = image_size
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.val_split = val_split
@@ -142,11 +145,11 @@ class SpineDataModule(LightningDataModule):
 
         self.train_dataset = SpineCoordinateDataset(
             train_images,
-            transform=transforms.get_train_transforms_with_replay(),
+            transform=transforms.get_train_transforms_with_replay(self.image_size),
         )
         self.val_dataset = SpineCoordinateDataset(
             val_images,
-            transform=transforms.get_val_transforms(),
+            transform=transforms.get_val_transforms(self.image_size),
         )
         self.data_loaded = True
 
@@ -171,3 +174,31 @@ class SpineDataModule(LightningDataModule):
             pin_memory=self.pin_memory,
             shuffle=False,
         )
+
+
+class InferenceImageDataset(Dataset):
+    def __init__(self, image_dir, transform):
+        self.image_paths = sorted(
+            [
+                p
+                for p in Path(image_dir).iterdir()
+                if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}
+            ]
+        )
+        log.info(f"Found {len(self.image_paths)} images in {image_dir}")
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx):
+        path = self.image_paths[idx]
+        image = Image.open(path).convert("L")  # Convert to grayscale
+        if isinstance(self.transform, A.Compose):
+            image = np.array(image)
+            augmented = self.transform(image=image)
+            image = augmented["image"]
+        else:
+            image = self.transform(image)
+
+        return image

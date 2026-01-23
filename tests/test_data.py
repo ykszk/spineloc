@@ -1,6 +1,6 @@
-import os
 from pathlib import Path
 
+import numpy as np
 import pytest
 import torch
 from PIL import Image
@@ -40,6 +40,13 @@ def test_spine_radiograph_from_labelme(spine_radiograph_dir):
         )
         assert instance.view == view
 
+        # test round trip of coordinates
+        # TODO: move to separate test
+        anat_coords = np.array([[-1, -1], [1, 1]])
+        pixel_coords = instance.anat_to_pix(anat_coords)
+        anat_coords_roundtrip = instance.pix_to_anat(pixel_coords)
+        np.testing.assert_allclose(anat_coords, anat_coords_roundtrip, atol=1e-5)
+
         spine_lm = instance.to_labelme()
         assert isinstance(spine_lm, LabelMe)
         output_path = spine_radiograph_dir / filename
@@ -47,8 +54,9 @@ def test_spine_radiograph_from_labelme(spine_radiograph_dir):
         with open(output_path, "w") as f:
             f.write(spine_lm.model_dump_json(indent=2))
 
-    inner("case1_frontal.json", is_frontal=True)
-    inner("case1_lateral.json", is_frontal=False)
+    for case_id in range(1, 5):
+        inner(f"case{case_id}_frontal.json", is_frontal=True)
+        inner(f"case{case_id}_lateral.json", is_frontal=False)
 
 
 def load_instances():

@@ -67,6 +67,8 @@ class SpineCoordinateDataset(Dataset):
         start_x = np.random.randint(0, max_x + 1) if max_x > 0 else 0
         end_y = int(start_y + crop_h)
         end_x = int(start_x + crop_w)
+        end_y = min(end_y, H)
+        end_x = min(end_x, W)
 
         crop_img, anat_coords = spine_radiograph.crop(start_x, start_y, end_x, end_y)
         view = spine_radiograph.view

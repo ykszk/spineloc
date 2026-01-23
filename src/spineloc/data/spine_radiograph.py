@@ -2,6 +2,7 @@ from enum import Enum
 from pathlib import Path
 
 import numpy as np
+from PIL import Image, ImageDraw, ImageOps
 
 from spineloc.utils.labelme import LabelMe
 
@@ -228,3 +229,73 @@ class SpineRadiograph:
         lm = LabelMe.from_file(json_path)
         lm.resolve_image_path(json_path.parent)
         return cls.from_labelme(lm)
+
+
+class SpineRadiographAtlas:
+    """
+    Spine atlas show scan regions
+    """
+
+    def __init__(self, frontal: SpineRadiograph, lateral_left: SpineRadiograph):
+        assert frontal.view == RadiographView.FRONTAL, "Frontal radiograph must have FRONTAL view."
+        assert lateral_left.view == RadiographView.LATERAL_LEFT, (
+            "Lateral radiograph must have LATERAL_LEFT view."
+        )
+        self.frontal = frontal
+        self.lateral_left = lateral_left
+
+    def locate(
+        self,
+        bounding_box: np.ndarray,
+        view: RadiographView,
+        line_color: str = "red",
+        line_width: int = 3,
+    ) -> Image.Image:
+        """
+        Locate bounding box in anatomical coordinates.
+
+        Args:
+            bounding_box: (top_x, top_y, bottom_x, bottom_y) in anatomical units
+            view: RadiographView
+
+        Returns:
+            image: PIL Image with bounding box drawn
+        """
+        if view == RadiographView.FRONTAL:
+            radiograph = self.frontal
+            flip_required = False
+        elif view == RadiographView.LATERAL_LEFT:
+            radiograph = self.lateral_left
+            flip_required = False
+        else:
+            radiograph = self.lateral_left
+            flip_required = True
+
+        # if flip_required:
+        #     bounding_box = bounding_box.copy()
+        #     bounding_box[0] *= -1  # Flip top_x
+        #     bounding_box[2] *= -1  # Flip bottom_x
+        print(bounding_box)
+        top_left_anat = np.array([[bounding_box[0], bounding_box[1]]])  # (x, y)
+        bottom_right_anat = np.array([[bounding_box[2], bounding_box[3]]])  # (x, y)
+
+        top_left_pix = radiograph.anat_to_pix(top_left_anat)
+        bottom_right_pix = radiograph.anat_to_pix(bottom_right_anat)
+        print(top_left_pix, bottom_right_pix)
+
+        # draw rectangle on image
+        image = Image.open(radiograph.image_path).convert("RGB")
+
+        if flip_required:
+            image = ImageOps.mirror(image)
+
+        draw = ImageDraw.Draw(image)
+        draw.rectangle(
+            [
+                (top_left_pix[0, 0], top_left_pix[0, 1]),
+                (bottom_right_pix[0, 0], bottom_right_pix[0, 1]),
+            ],
+            outline=line_color,
+            width=line_width,
+        )
+        return image

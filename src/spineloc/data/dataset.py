@@ -25,7 +25,7 @@ class SpineCoordinateDataset(Dataset):
         self,
         spine_images: list[SpineRadiograph],
         aspect_ratios: list[float] = [0.5, 0.75, 1.0, 1.5, 2.0],
-        crop_height_min_max: tuple[float, float] = (10, 20),  # in normalized units
+        crop_height_min_max: tuple[float, float] = (10, 30),  # in normalized units
         transform: Optional[A.Compose] = None,
     ):
         self.spine_images = spine_images
@@ -76,6 +76,8 @@ class SpineCoordinateDataset(Dataset):
             crop_img = transformed["image"]
             if was_flipped(transformed):
                 view = view.flip()
+                anat_coords[1] *= -1  # Flip top_x coordinate
+                anat_coords[3] *= -1  # Flip bottom_x coordinate
 
         # Encode view
         view_id = view.value

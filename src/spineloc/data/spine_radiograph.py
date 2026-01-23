@@ -57,7 +57,7 @@ class SpineRadiograph:
         self.view = view
 
     def crop(
-        self, top_y: int, top_x: int, bottom_y: int, bottom_x: int
+        self, top_x: int, top_y: int, bottom_x: int, bottom_y: int
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Crop the SpineRadiograph to the specified bounding box.
@@ -67,14 +67,14 @@ class SpineRadiograph:
         Returns:
             (cropped_image, coordinates)
             cropped_image: Cropped image as numpy array
-            coordinates: New coordinates (top_y, top_x, bottom_y, bottom_x) in anatomical units
+            coordinates: New coordinates (top_x, top_y, bottom_x, bottom_y) in anatomical units
         """
 
         image = load_image(self.image_path)
         cropped_image = image[top_y:bottom_y, top_x:bottom_x]
         top_left = (np.array([top_x, top_y]) - self.origin) / self.units
         bottom_right = (np.array([bottom_x, bottom_y]) - self.origin) / self.units
-        return cropped_image, np.array([top_left[1], top_left[0], bottom_right[1], bottom_right[0]])
+        return cropped_image, np.array([top_left[0], top_left[1], bottom_right[0], bottom_right[1]])
 
     def pix_to_anat(self, pix_coords: np.ndarray) -> np.ndarray:
         """

@@ -68,7 +68,7 @@ class SpineCoordinateDataset(Dataset):
         end_y = int(start_y + crop_h)
         end_x = int(start_x + crop_w)
 
-        crop_img, anat_coords = spine_radiograph.crop(start_y, start_x, end_y, end_x)
+        crop_img, anat_coords = spine_radiograph.crop(start_x, start_y, end_x, end_y)
         view = spine_radiograph.view
 
         # Apply transforms if any
@@ -77,8 +77,8 @@ class SpineCoordinateDataset(Dataset):
             crop_img = transformed["image"]
             if was_flipped(transformed):
                 view = view.flip()
-                anat_coords[1] *= -1  # Flip top_x coordinate
-                anat_coords[3] *= -1  # Flip bottom_x coordinate
+                anat_coords[0] *= -1  # Flip top_x coordinate
+                anat_coords[2] *= -1  # Flip bottom_x coordinate
 
         # Encode view
         view_id = view.value

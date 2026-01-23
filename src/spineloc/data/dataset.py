@@ -94,6 +94,7 @@ class SpineDataModule(LightningDataModule):
         batch_size=64,
         num_workers=0,
         val_split=0.2,
+        shuffle_before_split=True,
         pin_memory=False,
     ):
         super().__init__()
@@ -101,6 +102,7 @@ class SpineDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.val_split = val_split
+        self.shuffle_before_split = shuffle_before_split
         self.pin_memory = pin_memory
         self.data_loaded = False
 
@@ -131,7 +133,10 @@ class SpineDataModule(LightningDataModule):
 
         num_val = int(len(spine_images) * self.val_split)
         num_train = len(spine_images) - num_val
+        log.info(f"Train/val split: {num_train}/{num_val}")
 
+        if self.shuffle_before_split:
+            np.random.shuffle(spine_images)
         train_images = spine_images[:num_train]
         val_images = spine_images[num_train:]
 

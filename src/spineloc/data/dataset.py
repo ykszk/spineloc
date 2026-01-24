@@ -25,7 +25,7 @@ class SpineCoordinateDataset(Dataset):
     def __init__(
         self,
         spine_images: list[SpineRadiograph],
-        aspect_ratios: list[float] = [0.5, 0.75, 1.0, 1.5, 2.0],
+        aspect_ratios: list[Optional[float]] = [0.5, 0.75, 1.0, 1.5, 2.0, None],
         crop_height_min_max: tuple[float, float] = (10, 30),  # in normalized units
         transform: Optional[A.Compose] = None,
     ):
@@ -50,28 +50,38 @@ class SpineCoordinateDataset(Dataset):
         crop_height_anat = np.random.uniform(
             self.crop_height_min_max[0], self.crop_height_min_max[1]
         )  # in normalized units
-        crop_size_anat = (
-            int(crop_height_anat * aspect_ratio),
-            int(crop_height_anat),
-        )
 
         spine_radiograph: SpineRadiograph = self.spine_images[img_idx]
         assert isinstance(spine_radiograph, SpineRadiograph)
-        W, H = spine_radiograph.image_wh
-        [crop_w, crop_h] = crop_size_anat * spine_radiograph.units
+        if aspect_ratio is None:
+            # no cropping
+            crop_img = spine_radiograph.load_image()
+            pixel_coords = np.array(
+                [[0, 0], [spine_radiograph.image_wh[0], spine_radiograph.image_wh[1]]]
+            )
+            anat_coords = spine_radiograph.pix_to_anat(pixel_coords).ravel()
+            view = spine_radiograph.view
+        else:
+            crop_size_anat = (
+                int(crop_height_anat * aspect_ratio),
+                int(crop_height_anat),
+            )
 
-        # Random crop position
-        max_y = max(0, H - crop_h)
-        max_x = max(0, W - crop_w)
-        start_y = np.random.randint(0, max_y + 1) if max_y > 0 else 0
-        start_x = np.random.randint(0, max_x + 1) if max_x > 0 else 0
-        end_y = int(start_y + crop_h)
-        end_x = int(start_x + crop_w)
-        end_y = min(end_y, H)
-        end_x = min(end_x, W)
+            W, H = spine_radiograph.image_wh
+            [crop_w, crop_h] = crop_size_anat * spine_radiograph.units
 
-        crop_img, anat_coords = spine_radiograph.crop(start_x, start_y, end_x, end_y)
-        view = spine_radiograph.view
+            # Random crop position
+            max_y = max(0, H - crop_h)
+            max_x = max(0, W - crop_w)
+            start_y = np.random.randint(0, max_y + 1) if max_y > 0 else 0
+            start_x = np.random.randint(0, max_x + 1) if max_x > 0 else 0
+            end_y = int(start_y + crop_h)
+            end_x = int(start_x + crop_w)
+            end_y = min(end_y, H)
+            end_x = min(end_x, W)
+
+            crop_img, anat_coords = spine_radiograph.crop(start_x, start_y, end_x, end_y)
+            view = spine_radiograph.view
 
         # Apply transforms if any
         if self.transform:

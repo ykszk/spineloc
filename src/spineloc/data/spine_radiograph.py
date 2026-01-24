@@ -59,6 +59,10 @@ class SpineRadiograph:
         """(unit_x, unit_y) in pixels"""
         self.view = view
 
+    def load_image(self) -> np.ndarray:
+        """Load the radiograph image as a numpy array."""
+        return load_image(self.image_path)
+
     def crop(
         self, top_x: int, top_y: int, bottom_x: int, bottom_y: int
     ) -> tuple[np.ndarray, np.ndarray]:

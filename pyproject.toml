@@ -11,7 +11,7 @@ requires = ["hatchling"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
 
 [tool.ruff]
 line-length = 119
@@ -50,6 +50,9 @@ test_visual = "pytest -m visualize"
 
 [tool.pixi.feature.test.dependencies]
 ipykernel = ">=7.1.0,<8"
+
+[tool.pixi.feature.gpu]
+platforms = ["linux-64", "win-64"]
 
 [tool.pixi.feature.gpu.system-requirements]
 cuda = "12"

@@ -244,6 +244,15 @@ class SpineRadiographAtlas:
         self.frontal = frontal
         self.lateral_left = lateral_left
 
+    @staticmethod
+    def built_in() -> "SpineRadiographAtlas":
+        """Load built-in spine radiograph atlas."""
+
+        data_dir = Path(__file__).parent / "../../../data/radiopedia/raw"
+        frontal = SpineRadiograph.from_labelme_file(data_dir / "case4_frontal.json")
+        lateral_left = SpineRadiograph.from_labelme_file(data_dir / "case4_lateral.json")
+        return SpineRadiographAtlas(frontal=frontal, lateral_left=lateral_left)
+
     def locate(
         self,
         bounding_box: np.ndarray,
@@ -271,17 +280,11 @@ class SpineRadiographAtlas:
             radiograph = self.lateral_left
             flip_required = True
 
-        # if flip_required:
-        #     bounding_box = bounding_box.copy()
-        #     bounding_box[0] *= -1  # Flip top_x
-        #     bounding_box[2] *= -1  # Flip bottom_x
-        print(bounding_box)
         top_left_anat = np.array([[bounding_box[0], bounding_box[1]]])  # (x, y)
         bottom_right_anat = np.array([[bounding_box[2], bounding_box[3]]])  # (x, y)
 
         top_left_pix = radiograph.anat_to_pix(top_left_anat)
         bottom_right_pix = radiograph.anat_to_pix(bottom_right_anat)
-        print(top_left_pix, bottom_right_pix)
 
         # draw rectangle on image
         image = Image.open(radiograph.image_path).convert("RGB")

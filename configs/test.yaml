@@ -1,0 +1,36 @@
+defaults:
+  - _self_
+  - model: default
+  - data: default
+  - paths: default
+  - trainer: default
+  - hydra: default
+
+safetensors_path: ???
+image_dir: ???
+
+task_name: test
+
+transform:
+  _target_: torchvision.transforms.Compose
+  transforms:
+    - _target_: torchvision.transforms.Grayscale
+      num_output_channels: 1
+    - _target_: torchvision.transforms.Resize
+      size: [256, 256]
+    - _target_: torchvision.transforms.Normalize
+      mean: [0.5]
+      std: [0.5]
+    - _target_: torchvision.transforms.ToTensor
+
+dataset:
+  _target_: torchvision.datasets.ImageFolder
+  root: ${image_dir}
+  transform: ${transform}
+
+dataloader:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 32
+  num_workers: 4
+  pin_memory: false
+  drop_last: false

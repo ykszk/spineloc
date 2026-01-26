@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -15,6 +16,7 @@ def main(cfg: DictConfig):
         'set "safetensors_path" using "safetensors_path=<PATH_TO_SAFETENSORS>"'
     )
     assert cfg.image_dir, 'set "image_dir" using "image_dir=<PATH_TO_IMAGE_DIRECTORY>"'
+    assert cfg.paths.output_dir, 'set "output_dir" using "output_dir=<PATH_TO_OUTPUT_DIRECTORY>"'
 
     # Lazy imports
     import lightning as L
@@ -59,13 +61,17 @@ def main(cfg: DictConfig):
     outputs = list(zip(coords_maps, coord_log_vars, view_logitss))
 
     spine_atlas = SpineRadiographAtlas.built_in()
+    image_dir = Path(hydra.utils.to_absolute_path(cfg.image_dir))
+    output_dir = Path(hydra.utils.to_absolute_path(cfg.paths.output_dir))
     for path, output in zip(dataset.image_paths, outputs):
         coord_map, coord_log_var, view_logits = output
         view_id = view_logits.argmax(dim=0).item()
         view = RadiographView(view_id)
         bbox, uncert = MultiTaskSpineNet.predict_bounding_box(coord_map, coord_log_var)
         assert uncert is not None
-        output_json_path = path.with_suffix(".json")
+        path = path.resolve()
+        output_json_path = output_dir / path.relative_to(image_dir).with_suffix(".json")
+        output_json_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_json_path, "w") as f:
             json.dump(
                 {
@@ -79,10 +85,15 @@ def main(cfg: DictConfig):
                 },
                 f,
             )
-        output_img_path = path.with_name(path.stem + "_with_bbox.jpg")
+        # output_img_path = path.with_name(path.stem + "_with_bbox.jpg")
+        output_img_path = output_json_path.with_name(output_json_path.stem + "_with_bbox.jpg")
         image_with_bbox = spine_atlas.locate(bounding_box=bbox[0].cpu().numpy(), view=view)
         image_with_bbox.save(output_img_path)
         log.info(f"Saved prediction results to {output_json_path} and {output_img_path}")
+        # copy image to output dir
+        import shutil
+
+        shutil.copy(path, output_dir / path.relative_to(image_dir))
 
 
 if __name__ == "__main__":

@@ -268,6 +268,37 @@ class MultiTaskSpineModule(LightningModule):
         }
 
 
+class SpineViewModule(LightningModule):
+    """
+    View only classification module for testing purposes.
+    """
+
+    def __init__(
+        self,
+        net: torch.nn.Module,
+    ):
+        super().__init__()
+        self.save_hyperparameters(ignore=["loss"])
+        self.net = net
+
+    def forward(self, x):
+        """
+        Return view logits.
+        """
+        return self.net(x)[2]
+
+    def test_step(self, batch, batch_idx, dataloader_idx: int = 0):
+        x, y = batch
+        y_hat = self(x)
+        loss = F.cross_entropy(y_hat, y)
+        acc = (y_hat.argmax(dim=1) == y).float().mean()
+        self.log("test/loss", loss, on_step=False, on_epoch=True)
+        self.log("test/acc", acc, on_step=False, on_epoch=True)
+
+        # Use dataloader_idx to handle different test scenarios
+        return {"test_loss": loss}
+
+
 def generate_coordinate_targets(coords, feature_map_size):
     """Generate interpolated coordinate targets.
 

@@ -34,6 +34,22 @@ class RadiographView(Enum):
             raise ValueError(f"Unknown RadiographView: {self}")
 
 
+def determine_radiograph_view(flags: dict) -> RadiographView:
+    frontal = flags.get("frontal", False)
+    if frontal:
+        view = RadiographView.FRONTAL
+    else:
+        lateral = flags.get("lateral", False)
+        if not lateral:
+            raise ValueError("LabelMe flags must indicate 'frontal' or 'lateral' view.")
+        right = flags.get("right", False)
+        if right:
+            view = RadiographView.LATERAL_RIGHT
+        else:
+            view = RadiographView.LATERAL_LEFT
+    return view
+
+
 class SpineRadiograph:
     """
     Spine radiograph with patient specific anatomical coordinate system.
@@ -219,18 +235,7 @@ class SpineRadiograph:
         )
         units = np.array([mean_width, mean_height])
         image_wh = np.array([lm.imageWidth, lm.imageHeight])
-        frontal = lm.flags.get("frontal", False)
-        if frontal:
-            view = RadiographView.FRONTAL
-        else:
-            lateral = lm.flags.get("lateral", False)
-            if not lateral:
-                raise ValueError("LabelMe flags must indicate 'frontal' or 'lateral' view.")
-            right = lm.flags.get("right", False)
-            if right:
-                view = RadiographView.LATERAL_RIGHT
-            else:
-                view = RadiographView.LATERAL_LEFT
+        view = determine_radiograph_view(lm.flags)
         return cls(lm.imagePath, image_wh, origin, units, view)
 
     @classmethod
@@ -240,6 +245,75 @@ class SpineRadiograph:
         lm = LabelMe.from_file(json_path)
         lm.resolve_image_path(json_path.parent)
         return cls.from_labelme(lm)
+
+    @classmethod
+    def from_cervical_labelme(cls, lm: LabelMe) -> "SpineRadiograph":
+        """
+        Create a SpineRadiograph instance from LabelMe annotation of cervical x-ray.
+
+        LabelMe must contain points for C2(BL and BR) and C3 to T1 vertebrae to define the coordinate system.
+        Origin (mid point between C7 and L4) are estimated baased on cervical vertebrae points.
+        Units are estimated based on average vertebrae size in cervical spine.
+        """
+
+        shape_dict = lm.into_shape_dict()
+        points = shape_dict.shapes["point"]
+        n_tl = len(points["TL"])
+        n_tr = len(points["TR"])
+        n_bl = len(points["BL"])
+        n_br = len(points["BR"])
+        if n_tl != n_tr:
+            raise ValueError("Number of TL and TR points must be the same.")
+        if n_bl != n_br:
+            raise ValueError("Number of BL and BR points must be the same.")
+        if n_tl != n_bl - 1:  # -1 because C2 has only BL and BR points
+            raise ValueError("Number of top and bottom vertebrae points do not match.")
+        if n_tl < 6:
+            raise ValueError(
+                "At least 6 vertebrae points (C2 to T1) are required to define coordinate system."
+            )
+
+        corner_points = np.array(
+            [points["TL"], points["TR"], points["BL"][1:], points["BR"][1:]],
+        )[:, :, 0]  # (tl/tr/bl/br, vertebrae, xy)
+        corner_points = corner_points.transpose(1, 0, 2)  # (vertebrae, tl/tr/bl/br, xy)
+
+        multiplier = 1.3  # compensation factor to estimate full spine size from cervical spine
+        mean_width = multiplier * np.mean(
+            np.concatenate(
+                [
+                    np.linalg.norm(corner_points[:, 1] - corner_points[:, 0], axis=1),  # TR - TL
+                    np.linalg.norm(corner_points[:, 3] - corner_points[:, 2], axis=1),  # BR - BL
+                ],
+            )
+        )
+        mean_height = multiplier * np.mean(
+            np.concatenate(
+                [
+                    np.linalg.norm(corner_points[:, 2] - corner_points[:, 0], axis=1),  # BL - TL
+                    np.linalg.norm(corner_points[:, 3] - corner_points[:, 1], axis=1),  # BR - TR
+                ],
+            )
+        )
+        t1 = corner_points[-1]
+        t1_center = t1.mean(axis=0)
+        origin_y = (
+            t1_center[1] + 1.1 * 8 * mean_height
+        )  # estimate T9/T10 position. 1.1 is for disc height
+        origin = np.array([t1_center[0], origin_y])
+
+        units = np.array([mean_width, mean_height])
+        image_wh = np.array([lm.imageWidth, lm.imageHeight])
+        view = determine_radiograph_view(lm.flags)
+        return cls(lm.imagePath, image_wh, origin, units, view)
+
+    @classmethod
+    def from_cervical_labelme_file(cls, json_path: Path | str) -> "SpineRadiograph":
+        """Create SpineRadiograph from LabelMe JSON file for cervical x-ray."""
+        json_path = Path(json_path)
+        lm = LabelMe.from_file(json_path)
+        lm.resolve_image_path(json_path.parent)
+        return cls.from_cervical_labelme(lm)
 
 
 class SpineRadiographAtlas:
@@ -259,7 +333,7 @@ class SpineRadiographAtlas:
     def built_in() -> "SpineRadiographAtlas":
         """Load built-in spine radiograph atlas."""
 
-        data_dir = Path(__file__).parent / "../../../data/radiopedia/raw"
+        data_dir = Path(__file__).parent / "../../../data/radiopaedia/raw"
         frontal = SpineRadiograph.from_labelme_file(data_dir / "case4_frontal.json")
         lateral_left = SpineRadiograph.from_labelme_file(data_dir / "case4_lateral.json")
         return SpineRadiographAtlas(frontal=frontal, lateral_left=lateral_left)

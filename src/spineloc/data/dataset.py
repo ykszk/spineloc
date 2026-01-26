@@ -35,10 +35,6 @@ class SpineCoordinateDataset(Dataset):
         self.transform = transform
         self.crop_height_min_max = crop_height_min_max
 
-        # Encode labels
-        self.view_to_id = {"frontal": 0, "lateral": 1}
-        self.laterality_to_id = {"left": 0, "right": 1, None: -1}
-
     def __len__(self):
         return len(self.spine_images) * self.num_crops_per_image
 
@@ -60,7 +56,6 @@ class SpineCoordinateDataset(Dataset):
                 [[0, 0], [spine_radiograph.image_wh[0], spine_radiograph.image_wh[1]]]
             )
             anat_coords = spine_radiograph.pix_to_anat(pixel_coords).ravel()
-            view = spine_radiograph.view
         else:
             crop_size_anat = (
                 int(crop_height_anat * aspect_ratio),
@@ -81,8 +76,8 @@ class SpineCoordinateDataset(Dataset):
             end_x = min(end_x, W)
 
             crop_img, anat_coords = spine_radiograph.crop(start_x, start_y, end_x, end_y)
-            view = spine_radiograph.view
 
+        view = spine_radiograph.view
         # Apply transforms if any
         if self.transform:
             transformed = self.transform(image=crop_img)
@@ -103,6 +98,7 @@ class SpineDataModule(LightningDataModule):
     def __init__(
         self,
         data_dirs=["data/"],
+        cervical_data_dirs=[],
         image_size=(256, 256),
         batch_size=64,
         num_workers=0,
@@ -112,6 +108,7 @@ class SpineDataModule(LightningDataModule):
     ):
         super().__init__()
         self.data_dirs = [Path(d) for d in data_dirs]
+        self.cervical_data_dirs = [Path(d) for d in cervical_data_dirs]
         self.image_size = image_size
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -122,7 +119,10 @@ class SpineDataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         spine_images = []
-        for data_dir in self.data_dirs:
+        all_data_dirs = [(d, False) for d in self.data_dirs]
+        if self.cervical_data_dirs:
+            all_data_dirs.extend([(d, True) for d in self.cervical_data_dirs])
+        for data_dir, is_cervical in all_data_dirs:
             data_dir = data_dir
             log.info(f"Loading data from {data_dir}")
             sub_images = []
@@ -131,7 +131,10 @@ class SpineDataModule(LightningDataModule):
                 with open(data_dir, "r") as f:
                     for line in f:
                         lm = LabelMe.model_validate_json(line.strip())
-                        sr = SpineRadiograph.from_labelme(lm)
+                        if is_cervical:
+                            sr = SpineRadiograph.from_cervical_labelme(lm)
+                        else:
+                            sr = SpineRadiograph.from_labelme(lm)
                         sub_images.append(sr)
                 log.info(f"Loaded {len(sub_images)} json lines from {data_dir}")
                 spine_images.extend(sub_images)
@@ -139,7 +142,10 @@ class SpineDataModule(LightningDataModule):
             if not data_dir.is_dir():
                 raise ValueError(f"Data directory {data_dir} is not a directory or ndjson.")
             for json_path in data_dir.glob("*.json"):
-                sr = SpineRadiograph.from_labelme_file(json_path)
+                if is_cervical:
+                    sr = SpineRadiograph.from_cervical_labelme_file(json_path)
+                else:
+                    sr = SpineRadiograph.from_labelme_file(json_path)
                 sub_images.append(sr)
             log.info(f"Loaded {len(sub_images)} json files from {data_dir}")
             spine_images.extend(sub_images)

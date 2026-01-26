@@ -28,7 +28,7 @@ def spine_radiograph_dir(tmp_path_factory) -> Path:
 @pytest.mark.visualize
 def test_spine_radiograph_from_labelme(spine_radiograph_dir):
     def inner(filename: str, is_frontal: bool):
-        json_path = data_dir() / f"radiopedia/raw/{filename}"
+        json_path = data_dir() / f"radiopaedia/raw/{filename}"
         lm = LabelMe.from_file(json_path)
         lm.resolve_image_path(json_path.parent)
         instance = spine_radiograph.SpineRadiograph.from_labelme(lm)
@@ -59,13 +59,53 @@ def test_spine_radiograph_from_labelme(spine_radiograph_dir):
         inner(f"case{case_id}_lateral.json", is_frontal=False)
 
 
+@pytest.mark.visualize
+def test_cervical_labelme(spine_radiograph_dir):
+    def inner(json_filename: Path, is_frontal: bool):
+        json_path = Path(json_filename)
+        lm = LabelMe.from_file(json_path)
+        lm.resolve_image_path(json_path.parent)
+        instance = spine_radiograph.SpineRadiograph.from_cervical_labelme(lm)
+        assert isinstance(instance, spine_radiograph.SpineRadiograph)
+        view = (
+            spine_radiograph.RadiographView.FRONTAL
+            if is_frontal
+            else spine_radiograph.RadiographView.LATERAL_LEFT
+        )
+        assert instance.view == view
+
+        # test round trip of coordinates
+        # TODO: move to separate test
+        anat_coords = np.array([[-1, -1], [1, 1]])
+        pixel_coords = instance.anat_to_pix(anat_coords)
+        anat_coords_roundtrip = instance.pix_to_anat(pixel_coords)
+        np.testing.assert_allclose(anat_coords, anat_coords_roundtrip, atol=1e-5)
+
+        spine_lm = instance.to_labelme()
+        assert isinstance(spine_lm, LabelMe)
+        output_path = spine_radiograph_dir / ("neck_" + json_filename.name)
+        print(f"Writing output to {output_path}")
+        with open(output_path, "w") as f:
+            f.write(spine_lm.model_dump_json(indent=2))
+
+    json_path = data_dir() / "radiopaedia/neck/case1_lateral.json"
+    inner(json_path, is_frontal=False)
+
+
 def load_instances():
-    json_dir = data_dir() / "radiopedia/raw"
+    json_dir = data_dir() / "radiopaedia/raw"
     instances = []
     for json_path in json_dir.glob("*.json"):
         lm = LabelMe.from_file(json_path)
         lm.resolve_image_path(json_path.parent)
         instance = spine_radiograph.SpineRadiograph.from_labelme(lm)
+        instances.append(instance)
+
+    neck_json_dir = data_dir() / "radiopaedia/neck"
+    for json_path in neck_json_dir.glob("*.json"):
+        lm = LabelMe.from_file(json_path)
+        lm.resolve_image_path(json_path.parent)
+        instance = spine_radiograph.SpineRadiograph.from_cervical_labelme(lm)
         instances.append(instance)
     return instances
 
@@ -126,7 +166,7 @@ def test_val_dataset(spine_radiograph_dir):
 
 def test_data_module():
     data_module = SpineDataModule(
-        data_dirs=[str(data_dir() / "radiopedia/raw")], batch_size=2, num_workers=0, val_split=0.5
+        data_dirs=[str(data_dir() / "radiopaedia/raw")], batch_size=2, num_workers=0, val_split=0.5
     )
     data_module.setup()
     assert data_module.data_loaded

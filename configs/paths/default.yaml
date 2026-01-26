@@ -1,4 +1,5 @@
-data_dirs: ["data/radiopedia/raw"]
+data_dirs: ["data/radiopaedia/raw"]
+cervical_data_dirs: ["data/radiopaedia/neck"]
 
 # path to logging directory
 log_dir: ${.output_dir}/logs/

@@ -134,7 +134,11 @@ class SpineDataModule(LightningDataModule):
                         if is_cervical:
                             sr = SpineRadiograph.from_cervical_labelme(lm)
                         else:
-                            sr = SpineRadiograph.from_labelme(lm)
+                            try:
+                                sr = SpineRadiograph.from_labelme(lm)
+                            except ValueError as e:
+                                log.warning(f"Skipping invalid LabelMe data: {e}")
+                                continue
                         sub_images.append(sr)
                 log.info(f"Loaded {len(sub_images)} json lines from {data_dir}")
                 spine_images.extend(sub_images)

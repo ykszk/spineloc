@@ -39,7 +39,7 @@ class SpineRadiograph:
     Spine radiograph with patient specific anatomical coordinate system.
 
     Coordinate system is defined by:
-    origin: mid-point between C7 and S1 vertebrae in image coordinates (pixels)
+    origin: mid-point between C7 and L4 vertebrae in image coordinates (pixels)
     units: average width and height of vertebrae in pixels
     """
 
@@ -184,6 +184,12 @@ class SpineRadiograph:
             raise ValueError("Number of BL and BR points must be the same.")
         if n_tl != n_bl + 1:  # +1 because S1 has only TL and TR points
             raise ValueError("Number of top and bottom vertebrae points do not match.")
+        if n_tl < 18:
+            # C7, T1-T12, L1-L4, S1 => 17 vertebrae points
+            # L5 and L6 are optional
+            raise ValueError(
+                "At least 18 vertebrae points (C7 to L4 and S1) are required to define coordinate system."
+            )
 
         corner_points = np.array(
             [points["TL"][:-1], points["TR"][:-1], points["BL"], points["BR"]],
@@ -192,8 +198,9 @@ class SpineRadiograph:
 
         c7 = corner_points[0]
         c7_center = c7.mean(axis=0)
-        s_center = np.array([*points["TL"][-1], *points["TR"][-1]]).mean(axis=0)
-        origin = (c7_center + s_center) / 2.0
+        l4 = corner_points[16]  # assuming 17 vertebrae from C7 to L4
+        l4_center = l4.mean(axis=0)
+        origin = (c7_center + l4_center) / 2.0
         mean_width = np.mean(
             np.concatenate(
                 [

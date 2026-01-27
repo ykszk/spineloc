@@ -1,10 +1,14 @@
 defaults:
-  - _self_
   - model: default
   - data: default
   - paths: default
   - trainer: default
   - hydra: default
+  - _self_
+
+model:
+  net:
+    pretrained: false
 
 safetensors_path: ???
 image_dir: ???

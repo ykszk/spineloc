@@ -8,6 +8,23 @@ Multi-task deep learning model for spine X-ray coordinate regression.
 - Laterality detection (facing left/right)
 - Uncertainty estimation
 
+# Materials and Methods
+The training dataset consists of whole-spine radiographs of both frontal and lateral views. Each image in the training dataset is annotated with vertebral corners. See `data/radiopaedia/raw` for examples.
+
+## Coordinate system
+Anatomical coordinate system was defined per image as below:
+- x and y axes: image's x and y axes
+- unit size of x: average width of C7 to L5 vertebrae
+- unit size of y: average height of C7 to L5 vertebrae
+- origin: midpoint of C7 and L4 vertebrae
+
+## Data generator
+- During training, randomly cropped images were generated from each training image, and their anatomical coordinates relative to the original image were calculated.
+- Random image flipping was used to generate right-facing lateral images
+- The model was trained with two loss functions:
+  - classification: frontal, lateral-left, or lateral-right
+  - regression: anatomical coordinates
+
 # Development
 [lightning-hydra-template](https://github.com/ashleve/lightning-hydra-template) was loosely used as the baseline.
 

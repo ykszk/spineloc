@@ -7,7 +7,8 @@ from omegaconf import DictConfig, OmegaConf
 from spineloc.data import transforms
 from spineloc.data.dataset import InferenceImageDataset
 from spineloc.data.spine_radiograph import RadiographView, SpineRadiographAtlas
-from spineloc.models.spine import InferenceModule, MultiTaskSpineNet
+from spineloc.models.spine import MultiTaskSpineNet
+from spineloc.models.spine_module import InferenceModule
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="predict")

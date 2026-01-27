@@ -10,11 +10,9 @@ from omegaconf import DictConfig, OmegaConf
 from safetensors.torch import save_file
 
 from spineloc.data.dataset import SpineDataModule
-from spineloc.models.spine import MultiTaskSpineModule, MultiTaskSpineNet
-from spineloc.utils import (
-    instantiate_callbacks,
-    instantiate_loggers,
-)
+from spineloc.models.spine import MultiTaskSpineNet
+from spineloc.models.spine_module import MultiTaskSpineModule
+from spineloc.utils.instantiators import instantiate_callbacks, instantiate_loggers
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="train")

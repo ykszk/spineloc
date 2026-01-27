@@ -1,6 +1,6 @@
 import torch
 
-import spineloc.models.spine
+import spineloc.models.spine_module
 
 
 def test_generate_coordinate_targets():
@@ -45,7 +45,7 @@ def test_generate_coordinate_targets():
         ]
     )  # Shape: (B=2, 2, 4, 4)
 
-    targets = spineloc.models.spine.generate_coordinate_targets(coords, feature_map_size)
+    targets = spineloc.models.spine_module.generate_coordinate_targets(coords, feature_map_size)
 
     assert torch.allclose(targets, expected_targets, atol=1e-4), (
         "Generated targets do not match expected values."

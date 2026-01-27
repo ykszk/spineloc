@@ -1,11 +1,8 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Callable, DefaultDict, Dict, List, Optional, Set, Union
+from typing import Any, DefaultDict, Dict, List, Optional, Set, Union
 
-import numpy as np
 from pydantic import BaseModel
-
-from .mixins import LineMixin
 
 
 class LabelMe(BaseModel):
@@ -48,41 +45,6 @@ class LabelMe(BaseModel):
         self.imagePath = str(resolved)
         return resolved
 
-    def shift(self, tx: float, ty: float) -> "LabelMe":
-        shapes = []
-        for shape in self.shapes:
-            points = [[p[0] + tx, p[1] + ty] for p in shape.points]
-            shapes.append(shape.model_copy(update={"points": points}))
-        return self.model_copy(update={"shapes": shapes})
-
-    def scale(self, s: float) -> "LabelMe":
-        shapes = []
-        for shape in self.shapes:
-            points = [[p[0] * s, p[1] * s] for p in shape.points]
-            shapes.append(shape.model_copy(update={"points": points}))
-        return self.model_copy(update={"shapes": shapes})
-
-    def rotate(self, angle_deg: float, center: Optional[List[float]] = None) -> "LabelMe":
-        angle_rad = np.deg2rad(angle_deg)
-        cos_a = np.cos(angle_rad)
-        sin_a = np.sin(angle_rad)
-
-        if center is None:
-            center = [self.imageWidth / 2, self.imageHeight / 2]
-
-        cx, cy = center
-        shapes = []
-        for shape in self.shapes:
-            points = []
-            for p in shape.points:
-                x_shifted = p[0] - cx
-                y_shifted = p[1] - cy
-                x_rotated = x_shifted * cos_a - y_shifted * sin_a + cx
-                y_rotated = x_shifted * sin_a + y_shifted * cos_a + cy
-                points.append([x_rotated, y_rotated])
-            shapes.append(shape.model_copy(update={"points": points}))
-        return self.model_copy(update={"shapes": shapes})
-
     def _into_dict(self) -> Dict[str, Dict[str, list]]:
         """
         Dict[shape: str, Dict[label: str, points: list]]
@@ -96,9 +58,6 @@ class LabelMe(BaseModel):
         # defaultdict -> dict
         output = {k: {kk: vv for kk, vv in v.items()} for k, v in shape_dict.items()}
         return output
-
-    def into_labelme_line(self, filename: str) -> "LabelMeLine":
-        return LabelMeLine(content=self, filename=filename)
 
     def into_shape_dict(self) -> "ShapeDict":
         shapes = self._into_dict()
@@ -145,39 +104,3 @@ class ShapeDict(BaseModel):
             imageWidth=self.imageWidth,
             flags={k: True for k in self.flags},
         )
-
-    def transform(self, tf: Callable):
-        """
-        Apply a transformation to the points in the shape dict.
-
-        Args:
-            tf (Callable): A function that takes a list of points and returns a transformed list of points.
-        """
-        for shape_type, labels in self.shapes.items():
-            for label, points in labels.items():
-                for i, p in enumerate(points):
-                    points[i] = tf(p)
-        return self
-
-
-class ShapeDictLine(LineMixin):
-    content: ShapeDict
-    filename: str
-
-    @staticmethod
-    def from_file(filename: Union[str, Path]) -> "ShapeDictLine":
-        with open(filename) as f:
-            return ShapeDictLine.model_validate_json(f.read())
-
-    def into_labelme_line(self) -> "LabelMeLine":
-        return LabelMeLine(content=self.content.into_labelme(), filename=self.filename)
-
-
-class LabelMeLine(LineMixin):
-    content: LabelMe
-    filename: str
-
-    def into_shape_dict_line(self) -> ShapeDictLine:
-        shape_dict = self.content.into_shape_dict()
-        return ShapeDictLine(content=shape_dict, filename=self.filename)
-        return ShapeDictLine(content=shape_dict, filename=self.filename)

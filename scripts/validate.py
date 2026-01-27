@@ -8,7 +8,8 @@ from safetensors.torch import load_file
 from torch.utils.data import DataLoader
 
 from spineloc.data import transforms
-from spineloc.models.spine import MultiTaskSpineNet, SpineViewModule
+from spineloc.models.spine import MultiTaskSpineNet
+from spineloc.models.spine_module import SpineViewModule
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="validation")
@@ -53,4 +54,5 @@ def main(cfg: DictConfig):
 
 
 if __name__ == "__main__":
+    main()
     main()

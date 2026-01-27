@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageOps
 
-from spineloc.utils.labelme import LabelMe
+from ..utils.labelme import LabelMe
 
 
 def load_image(image_path: str) -> np.ndarray:

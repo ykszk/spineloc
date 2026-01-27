@@ -278,7 +278,7 @@ class SpineRadiograph:
         )[:, :, 0]  # (tl/tr/bl/br, vertebrae, xy)
         corner_points = corner_points.transpose(1, 0, 2)  # (vertebrae, tl/tr/bl/br, xy)
 
-        multiplier = 1.3  # compensation factor to estimate full spine size from cervical spine
+        multiplier = 1.35  # compensation factor to estimate full spine size from cervical spine
         mean_width = multiplier * np.mean(
             np.concatenate(
                 [
@@ -298,8 +298,8 @@ class SpineRadiograph:
         t1 = corner_points[-1]
         t1_center = t1.mean(axis=0)
         origin_y = (
-            t1_center[1] + 1.1 * 8 * mean_height
-        )  # estimate T9/T10 position. 1.1 is for disc height
+            t1_center[1] + 1.05 * 8 * mean_height
+        )  # estimate T9/T10 position. 1.05 is for disc height
         origin = np.array([t1_center[0], origin_y])
 
         units = np.array([mean_width, mean_height])

@@ -26,7 +26,7 @@ class SpineCoordinateDataset(Dataset):
         self,
         spine_images: list[SpineRadiograph],
         aspect_ratios: list[Optional[float]] = [0.5, 0.75, 1.0, 1.5, 2.0, None],
-        crop_height_min_max: tuple[float, float] = (10, 30),  # in normalized units
+        crop_height_min_max: tuple[float, float] = (5, 30),  # in normalized units
         transform: Optional[A.Compose] = None,
     ):
         self.spine_images = spine_images

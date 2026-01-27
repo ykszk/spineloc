@@ -7,9 +7,9 @@ defaults:
   - hydra: default
 
 safetensors_path: ???
-image_dir: ???
+image_dir: "data/radiopaedia/test"
 
-task_name: test
+task_name: validation
 
 transform:
   _target_: torchvision.transforms.Compose

@@ -11,7 +11,7 @@ from spineloc.data import transforms
 from spineloc.models.spine import MultiTaskSpineNet, SpineViewModule
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="test")
+@hydra.main(version_base=None, config_path="../configs", config_name="validation")
 def main(cfg: DictConfig):
     assert cfg.safetensors_path, (
         'set "safetensors_path" using "safetensors_path=<PATH_TO_SAFETENSORS>"'

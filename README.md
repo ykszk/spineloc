@@ -20,6 +20,21 @@ Multi-task deep learning model for spine X-ray coordinate regression.
 - cpu: `pixi run train`
 - gpu: `pixi run -e gpu train trainer=gpu data=gpu`
 
+## Validate and Predict
+Calculate classification accuracy using images in `data/radiopaedia/test`
+```bash
+pixi run validate paths.output_dir=/tmp/validation safetensors_path=path/to/trained.safetensors
+```
+
+Predict on new images
+```bash
+pixi run -e gpu predict image_dir=/tmp/new/inputs paths.output_dir=/tmp/new/outputs safetensors_path=path/to/trained.safetensors
+```
+Optionally, add `-e gpu` to run in a gpu environment
+
 ## Software Test
 - Run `pixi run test`
   - Run `pixel run text_visual -vs` to run visualization test
+
+## TODOs
+- [ ] Add oblique view?

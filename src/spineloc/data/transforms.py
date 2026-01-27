@@ -24,7 +24,7 @@ def get_train_transforms_with_replay(image_size=(256, 256)) -> A.ReplayCompose:
         [
             A.Resize(height=image_size[0], width=image_size[1]),
             A.HorizontalFlip(p=0.5),  # Track this
-            A.Rotate(limit=15, p=0.5),
+            A.Rotate(limit=30, p=0.5),
             A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
             A.Normalize(mean=[0.5], std=[0.5], max_pixel_value=255.0),
             ToTensorV2(),

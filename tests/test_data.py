@@ -6,8 +6,12 @@ import torch
 from PIL import Image
 
 import spineloc.data.transforms as transforms
-from spineloc.data import spine_radiograph
-from spineloc.data.dataset import SpineCoordinateDataset, SpineDataModule
+from spineloc.data.dataset import (
+    SpineCoordinateDataset,
+    SpineDataModule,
+    SpineRadiograph,
+)
+from spineloc.data.spine_radiograph import RadiographView, SpineRadiographAtlas
 from spineloc.utils.labelme import LabelMe
 
 
@@ -31,13 +35,9 @@ def test_spine_radiograph_from_labelme(spine_radiograph_dir):
         json_path = data_dir() / f"radiopaedia/raw/{filename}"
         lm = LabelMe.from_file(json_path)
         lm.resolve_image_path(json_path.parent)
-        instance = spine_radiograph.SpineRadiograph.from_labelme(lm)
-        assert isinstance(instance, spine_radiograph.SpineRadiograph)
-        view = (
-            spine_radiograph.RadiographView.FRONTAL
-            if is_frontal
-            else spine_radiograph.RadiographView.LATERAL_LEFT
-        )
+        instance = SpineRadiograph.from_labelme(lm)
+        assert isinstance(instance, SpineRadiograph)
+        view = RadiographView.FRONTAL if is_frontal else RadiographView.LATERAL_LEFT
         assert instance.view == view
 
         # test round trip of coordinates
@@ -65,13 +65,9 @@ def test_cervical_labelme(spine_radiograph_dir):
         json_path = Path(json_filename)
         lm = LabelMe.from_file(json_path)
         lm.resolve_image_path(json_path.parent)
-        instance = spine_radiograph.SpineRadiograph.from_cervical_labelme(lm)
-        assert isinstance(instance, spine_radiograph.SpineRadiograph)
-        view = (
-            spine_radiograph.RadiographView.FRONTAL
-            if is_frontal
-            else spine_radiograph.RadiographView.LATERAL_LEFT
-        )
+        instance = SpineRadiograph.from_cervical_labelme(lm)
+        assert isinstance(instance, SpineRadiograph)
+        view = RadiographView.FRONTAL if is_frontal else RadiographView.LATERAL_LEFT
         assert instance.view == view
 
         # test round trip of coordinates
@@ -98,24 +94,26 @@ def load_instances():
     for json_path in json_dir.glob("*.json"):
         lm = LabelMe.from_file(json_path)
         lm.resolve_image_path(json_path.parent)
-        instance = spine_radiograph.SpineRadiograph.from_labelme(lm)
+        instance = SpineRadiograph.from_labelme(lm)
         instances.append(instance)
 
     neck_json_dir = data_dir() / "radiopaedia/neck"
     for json_path in neck_json_dir.glob("*.json"):
         lm = LabelMe.from_file(json_path)
         lm.resolve_image_path(json_path.parent)
-        instance = spine_radiograph.SpineRadiograph.from_cervical_labelme(lm)
+        instance = SpineRadiograph.from_cervical_labelme(lm)
         instances.append(instance)
     return instances
 
 
 def save_dataset(dataset: SpineCoordinateDataset, output_dir: Path):
     output_dir.mkdir(exist_ok=True)
+    atlas = SpineRadiographAtlas.built_in()
     for i in range(len(dataset)):
         crop_img, anat_coords, view_id = dataset[i]
         image_path = output_dir / f"crop_{i:03d}.jpg"
         text_path = output_dir / f"crop_{i:03d}.txt"
+        loc_path = output_dir / f"crop_{i:03d}_loc.jpg"
 
         if isinstance(crop_img, torch.Tensor):
             crop_img = crop_img.numpy()[0]
@@ -127,6 +125,8 @@ def save_dataset(dataset: SpineCoordinateDataset, output_dir: Path):
         with open(text_path, "w") as f:
             f.write(f"view: {view_id}\n")
             f.write(f"coord: {anat_coords}\n")
+        loc_img = atlas.locate(anat_coords, RadiographView(view_id))
+        loc_img.save(loc_path)
 
 
 @pytest.mark.visualize

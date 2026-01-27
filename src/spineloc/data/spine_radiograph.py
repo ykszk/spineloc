@@ -79,6 +79,24 @@ class SpineRadiograph:
         """Load the radiograph image as a numpy array."""
         return load_image(self.image_path)
 
+    def flip(self) -> "SpineRadiograph":
+        """
+        Return a new SpineRadiograph instance with horizontal flip applied.
+        Note that image is not flipped here.
+
+        The view and origin are adjusted accordingly.
+        """
+        flipped_origin_x = self.image_wh[0] - self.origin[0]
+        flipped_origin = np.array([flipped_origin_x, self.origin[1]])
+        flipped_view = self.view.flip()
+        return SpineRadiograph(
+            image_path=self.image_path,
+            image_wh=self.image_wh,
+            origin=flipped_origin,
+            units=self.units,
+            view=flipped_view,
+        )
+
     def crop(
         self, top_x: int, top_y: int, bottom_x: int, bottom_y: int
     ) -> tuple[np.ndarray, np.ndarray]:
@@ -104,13 +122,13 @@ class SpineRadiograph:
         Convert pixel coordinates to anatomical coordinates.
 
         Args:
-            pix_coords: Pixel coordinates as (N, 2) array
+            pix_coords: Pixel coordinates as (N, xy) array
 
         Returns:
-            anat_coords: Anatomical coordinates as (N, 2) array
+            anat_coords: Anatomical coordinates as (N, xy) array
         """
-        shifted = pix_coords - self.origin  # (N, 2)
-        anat_coords = shifted / self.units  # (N, 2)
+        shifted = pix_coords - self.origin  # (N, xy)
+        anat_coords = shifted / self.units  # (N, xy)
         return anat_coords
 
     def anat_to_pix(self, anat_coords: np.ndarray) -> np.ndarray:
@@ -118,13 +136,13 @@ class SpineRadiograph:
         Convert anatomical coordinates to pixel coordinates.
 
         Args:
-            anat_coords: Anatomical coordinates as (N, 2) array
+            anat_coords: Anatomical coordinates as (N, xy) array
 
         Returns:
-            pix_coords: Pixel coordinates as (N, 2) array
+            pix_coords: Pixel coordinates as (N, xy) array
         """
-        scaled = anat_coords * self.units  # (N, 2)
-        pix_coords = scaled + self.origin  # (N, 2)
+        scaled = anat_coords * self.units  # (N, xy)
+        pix_coords = scaled + self.origin  # (N, xy)
         return pix_coords
 
     def to_labelme(self, axis_length=5) -> LabelMe:
@@ -362,7 +380,7 @@ class SpineRadiographAtlas:
             radiograph = self.lateral_left
             flip_required = False
         else:
-            radiograph = self.lateral_left
+            radiograph = self.lateral_left.flip()
             flip_required = True
 
         top_left_anat = np.array([[bounding_box[0], bounding_box[1]]])  # (x, y)

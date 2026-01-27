@@ -170,6 +170,7 @@ class SpineDataModule(LightningDataModule):
         )
         self.val_dataset = SpineCoordinateDataset(
             val_images,
+            crop_height_min_max=(10, 30),  # less aggressive cropping for validation
             transform=transforms.get_val_transforms(self.image_size),
         )
         self.data_loaded = True

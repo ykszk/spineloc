@@ -1,6 +1,6 @@
 net:
   _target_: spineloc.models.spine.MultiTaskSpineNet
-  backbone_name: mobilenetv3_large_100
+  backbone_name: mobilenetv3_small_100
   pretrained: true
   in_channels: 1
   num_views: 3

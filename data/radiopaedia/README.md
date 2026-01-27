@@ -11,6 +11,10 @@ Images were obtained from [Radiopaedia.org](https://radiopaedia.org/) and were l
 - case4 : Case courtesy of Henry Knipe, <a href="https://radiopaedia.org/?lang=us">Radiopaedia.org</a>. From the case <a href="https://radiopaedia.org/cases/176510?lang=us">rID: 176510</a>
 - case5 : Case courtesy of Jeremy Jones, <a href="https://radiopaedia.org/?lang=us">Radiopaedia.org</a>. From the case <a href="https://radiopaedia.org/cases/89570?lang=us">rID: 89570</a>
 
+- neck/case1 : Case courtesy of Andrew Dixon, <a href="https://radiopaedia.org/?lang=us">Radiopaedia.org</a>. From the case <a href="https://radiopaedia.org/cases/32505?lang=us">rID: 32505</a>
+- neck/case2 : Case courtesy of Frank Gaillard, <a href="https://radiopaedia.org/?lang=us">Radiopaedia.org</a>. From the case <a href="https://radiopaedia.org/cases/37967?lang=us">rID: 37967</a>
+
+
 ## Note
 - Annotations (points) were made for testing the program thus they are not guaranteed to be accurate.
 - Images were resized and/or cropped to smaller sizes and converted to jpeg format (if original format was png).

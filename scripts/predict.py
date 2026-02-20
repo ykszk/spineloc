@@ -6,7 +6,12 @@ from omegaconf import DictConfig, OmegaConf
 
 from spineloc.data import transforms
 from spineloc.data.dataset import InferenceImageDataset
-from spineloc.data.spine_radiograph import RadiographView, SpineRadiographAtlas
+from spineloc.data.spine_radiograph import (
+    PhotometricInterpretation,
+    RadiographRotation90,
+    RadiographView,
+    SpineRadiographAtlas,
+)
 from spineloc.models.spine import MultiTaskSpineNet
 from spineloc.models.spine_module import InferenceModule
 
@@ -58,16 +63,39 @@ def main(cfg: DictConfig):
     # Flatten outputs
     coords_maps = torch.concat([b[0] for b in outputs], dim=0)
     coord_log_vars = torch.concat([b[1] for b in outputs], dim=0)
-    view_logitss = torch.concat([b[2] for b in outputs], dim=0)
-    outputs = list(zip(coords_maps, coord_log_vars, view_logitss))
+    view_logits = torch.concat([b[2] for b in outputs], dim=0)
+    photometric_logit = torch.concat([b[3] for b in outputs], dim=0)
+    rotation_90_logits = torch.concat([b[4] for b in outputs], dim=0)
+    rotation_angle = torch.concat([b[5] for b in outputs], dim=0)
+    outputs = list(
+        zip(
+            coords_maps,
+            coord_log_vars,
+            view_logits,
+            photometric_logit,
+            rotation_90_logits,
+            rotation_angle,
+        )
+    )
 
     spine_atlas = SpineRadiographAtlas.built_in()
     image_dir = Path(hydra.utils.to_absolute_path(cfg.image_dir))
     output_dir = Path(hydra.utils.to_absolute_path(cfg.paths.output_dir))
     for path, output in zip(dataset.image_paths, outputs):
-        coord_map, coord_log_var, view_logits = output
+        (
+            coord_map,
+            coord_log_var,
+            view_logits,
+            photometric_logit,
+            rotation_90_logits,
+            rotation_angle,
+        ) = output
         view_id = view_logits.argmax(dim=0).item()
         view = RadiographView(view_id)
+        photometric_id = (photometric_logit > 0).item()
+        photometric = PhotometricInterpretation(photometric_id)
+        rotation_90_id = rotation_90_logits.argmax(dim=0).item()
+        rotation_90 = RadiographRotation90(rotation_90_id)
         bbox, uncert = MultiTaskSpineNet.predict_bounding_box(coord_map, coord_log_var)
         assert uncert is not None
         path = path.resolve()
@@ -83,6 +111,13 @@ def main(cfg: DictConfig):
                     "coordinates_map": coord_map.tolist(),
                     "coordinates_log_variance": coord_log_var.tolist(),
                     "view_logits": view_logits.tolist(),
+                    "photometric_logit": photometric_logit.item(),
+                    "photometric_id": photometric_id,
+                    "photometric": photometric.name,
+                    "rotation_90_logits": rotation_90_logits.tolist(),
+                    "rotation_90_id": rotation_90_id,
+                    "rotation_90": rotation_90.name,
+                    "rotation_angle": rotation_angle.item(),
                 },
                 f,
             )

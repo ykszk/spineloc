@@ -1,10 +1,8 @@
 data_dirs: ["data/radiopaedia/raw"]
 cervical_data_dirs: ["data/radiopaedia/neck"]
 
-root_dir: ${oc.env:PROJECT_ROOT}
-
 # path to logging directory
-log_dir: ${paths.root_dir}
+log_dir: ${paths.output_dir}/logs
 
 # path to output directory, created dynamically by hydra
 # path generation pattern is specified in `configs/hydra/default.yaml`

@@ -51,7 +51,7 @@ Optionally, add `-e gpu` to run in a gpu environment
 
 ## Software Test
 - Run `pixi run test`
-  - Run `pixel run text_visual -vs` to run visualization test
+  - Run `pixi run test_visual -vs` to run visualization test
 
 ## TODOs
 - [ ] Add oblique view?

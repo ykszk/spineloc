@@ -57,6 +57,30 @@ class MultiTaskSpineNet(torch.nn.Module):
             nn.Linear(cls_mid_dim, num_views),
         )
 
+        # Photometric Interpretation head
+        self.photometric_classifier = nn.Sequential(
+            nn.Linear(feature_dim, cls_mid_dim),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(cls_mid_dim, 1),  # Binary classification
+        )
+
+        # Rotation 90 head
+        self.rotation_90_classifier = nn.Sequential(
+            nn.Linear(feature_dim, cls_mid_dim),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(cls_mid_dim, 4),  # 4 classes for 0, 90, 180, 270 degrees
+        )
+
+        # Rotation angle head
+        self.rotation_angle_regressor = nn.Sequential(
+            nn.Linear(feature_dim, cls_mid_dim),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(cls_mid_dim, 1),  # Regression for rotation angle
+        )
+
     def forward(self, x):
         """
         Args:
@@ -85,8 +109,18 @@ class MultiTaskSpineNet(torch.nn.Module):
 
         # Classifications
         view_logits = self.view_classifier(global_feat)
+        photometric_logits = self.photometric_classifier(global_feat)
+        rotation_90_logits = self.rotation_90_classifier(global_feat)
+        rotation_angle = self.rotation_angle_regressor(global_feat)
 
-        return coord_map, coord_log_var, view_logits
+        return (
+            coord_map,
+            coord_log_var,
+            view_logits,
+            photometric_logits,
+            rotation_90_logits,
+            rotation_angle,
+        )
 
     @staticmethod
     def predict_bounding_box(coord_map, coord_log_var=None):

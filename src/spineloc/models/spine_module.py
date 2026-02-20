@@ -14,12 +14,12 @@ class SpineLoss:
         self,
         coord_loss_type="l2",
         coord_weight=1.0,
-        view_weight=1.0,
+        aux_weight=1.0,
     ):
         assert coord_loss_type in ["l2", "smooth_l1", "l1"], "Unsupported coordinate loss type."
         self.coord_loss_type = coord_loss_type
         self.coord_weight = coord_weight
-        self.view_weight = view_weight
+        self.aux_weight = aux_weight
 
         # coordinate loss function without uncertainty
         if self.coord_loss_type == "smooth_l1":
@@ -56,6 +56,12 @@ class SpineLoss:
         target_coords,
         view_logits,
         target_views,
+        photometric_logits,
+        target_photometric,
+        rotation_90_logits,
+        target_rotation_90,
+        rotation_angle,
+        target_rotation_angle,
         coord_log_var=None,
     ):
         """Compute multi-task loss."""
@@ -67,10 +73,24 @@ class SpineLoss:
 
         # View classification loss
         view_loss = F.cross_entropy(view_logits, target_views)
+        photometric_loss = F.binary_cross_entropy_with_logits(
+            photometric_logits.squeeze(), target_photometric.float()
+        )
+        rotation_90_loss = F.cross_entropy(rotation_90_logits, target_rotation_90)
+        rotation_angle_loss = F.mse_loss(rotation_angle.squeeze(), target_rotation_angle.float())
 
-        total_loss = self.coord_weight * coord_loss + self.view_weight * view_loss
+        total_loss = self.coord_weight * coord_loss + self.aux_weight * (
+            view_loss + photometric_loss + rotation_90_loss + rotation_angle_loss
+        )
 
-        return total_loss, coord_loss, view_loss
+        return (
+            total_loss,
+            coord_loss,
+            view_loss,
+            photometric_loss,
+            rotation_90_loss,
+            rotation_angle_loss,
+        )
 
 
 class MultiTaskSpineModule(LightningModule):
@@ -95,10 +115,21 @@ class MultiTaskSpineModule(LightningModule):
             self.net = torch.compile(self.net)
 
     def shared_step(self, batch, batch_idx, log_prefix: str):
-        images, coords, view_ids = batch
+        images, coords, rad_chars = batch
+        view_ids = rad_chars["view"].long()
+        pi = rad_chars["photometric_interpretation"]
+        rotation_90 = rad_chars["rotation_90"]
+        rotation_angle = rad_chars["rotation_angle"]
 
         # Forward pass
-        coord_map, coord_log_var, view_logits = self(images)
+        (
+            coord_map,
+            coord_log_var,
+            view_logits,
+            photometric_logits,
+            rotation_90_logits,
+            rotation_angle,
+        ) = self(images)
 
         # Generate targets
         _, _, h, w = coord_map.shape
@@ -109,11 +140,20 @@ class MultiTaskSpineModule(LightningModule):
             total_loss,
             coord_loss,
             view_loss,
+            photometric_loss,
+            rotation_90_loss,
+            rotation_angle_loss,
         ) = self.loss(
             coord_map,
             target_coords,
             view_logits,
             view_ids,
+            photometric_logits,
+            pi,
+            rotation_90_logits,
+            rotation_90,
+            rotation_angle,
+            rotation_angle,
             coord_log_var,
         )
 
@@ -125,6 +165,11 @@ class MultiTaskSpineModule(LightningModule):
         self.log(f"{log_prefix}/coord_loss", coord_loss, on_step=False, on_epoch=True)
         self.log(f"{log_prefix}/view_loss", view_loss, on_step=False, on_epoch=True)
         self.log(f"{log_prefix}/view_acc", view_acc, on_step=False, on_epoch=True)
+        self.log(f"{log_prefix}/photometric_loss", photometric_loss, on_step=False, on_epoch=True)
+        self.log(f"{log_prefix}/rotation_90_loss", rotation_90_loss, on_step=False, on_epoch=True)
+        self.log(
+            f"{log_prefix}/rotation_angle_loss", rotation_angle_loss, on_step=False, on_epoch=True
+        )
 
         return total_loss
 

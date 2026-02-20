@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import numpy as np
@@ -110,7 +111,7 @@ def save_dataset(dataset: SpineCoordinateDataset, output_dir: Path):
     output_dir.mkdir(exist_ok=True)
     atlas = SpineRadiographAtlas.built_in()
     for i in range(len(dataset)):
-        crop_img, anat_coords, view_id = dataset[i]
+        crop_img, anat_coords, rad_char = dataset[i]
         image_path = output_dir / f"crop_{i:03d}.jpg"
         text_path = output_dir / f"crop_{i:03d}.txt"
         loc_path = output_dir / f"crop_{i:03d}_loc.jpg"
@@ -123,9 +124,18 @@ def save_dataset(dataset: SpineCoordinateDataset, output_dir: Path):
         img.save(image_path)
 
         with open(text_path, "w") as f:
-            f.write(f"view: {view_id}\n")
+            f.write(f"characteristics: {json.dumps(rad_char, indent=2)}\n")
             f.write(f"coord: {anat_coords}\n")
-        loc_img = atlas.locate(anat_coords, RadiographView(view_id))
+        # standardize coords because augmentations may change the range
+        anat_coords[0], anat_coords[2] = (
+            min(anat_coords[0], anat_coords[2]),
+            max(anat_coords[0], anat_coords[2]),
+        )
+        anat_coords[1], anat_coords[3] = (
+            min(anat_coords[1], anat_coords[3]),
+            max(anat_coords[1], anat_coords[3]),
+        )
+        loc_img = atlas.locate(anat_coords, rad_char["view"])
         loc_img.save(loc_path)
 
 

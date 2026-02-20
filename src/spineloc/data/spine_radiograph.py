@@ -50,6 +50,57 @@ def determine_radiograph_view(flags: dict) -> RadiographView:
     return view
 
 
+class PhotometricInterpretation(Enum):
+    NORMAL = 0
+    """MONOCHROME2: High density is white, low density is black."""
+    INVERTED = 1
+    """MONOCHROME1: High density is black, low density is white."""
+
+
+class RadiographRotation90(Enum):
+    """Rotation of the radiograph image."""
+
+    ROTATE_0 = 0
+    ROTATE_90 = 1
+    ROTATE_180 = 2
+    ROTATE_270 = 3
+
+    @staticmethod
+    def from_angle(angle: float) -> "RadiographRotation90":
+        """Convert rotation angle in degrees to RadiographRotation90."""
+        angle = angle % 360
+        if angle < 45 or angle >= 315:
+            return RadiographRotation90.ROTATE_0
+        elif 45 <= angle < 135:
+            return RadiographRotation90.ROTATE_90
+        elif 135 <= angle < 225:
+            return RadiographRotation90.ROTATE_180
+        else:
+            return RadiographRotation90.ROTATE_270
+
+
+class RadiographCharacteristics:
+    def __init__(
+        self,
+        view: RadiographView,
+        photometric_interpretation: PhotometricInterpretation,
+        rotation_90: RadiographRotation90,
+        rotation_angle: float,
+    ):
+        self.view = view
+        self.photometric_interpretation = photometric_interpretation
+        self.rotation_90 = rotation_90
+        self.rotation_angle = rotation_angle
+
+    def to_dict(self) -> dict:
+        return {
+            "view": self.view.name,
+            "photometric_interpretation": self.photometric_interpretation.name,
+            "rotation_90": self.rotation_90.name,
+            "rotation_angle": self.rotation_angle,
+        }
+
+
 class SpineRadiograph:
     """
     Spine radiograph with patient specific anatomical coordinate system.

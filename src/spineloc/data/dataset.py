@@ -10,8 +10,13 @@ from torch.utils.data import DataLoader, Dataset
 from spineloc.data import transforms
 from spineloc.utils import pylogger
 
-from ..data.spine_radiograph import SpineRadiograph
-from ..data.transforms import was_flipped
+from ..data.spine_radiograph import (
+    PhotometricInterpretation,
+    RadiographCharacteristics,
+    RadiographRotation90,
+    SpineRadiograph,
+)
+from ..data.transforms import extract_rotation_90, extract_rotation_angle, was_flipped, was_inverted
 from ..utils.labelme import LabelMe
 
 log = pylogger.RankedLogger(__name__, rank_zero_only=True)
@@ -78,6 +83,9 @@ class SpineCoordinateDataset(Dataset):
             crop_img, anat_coords = spine_radiograph.crop(start_x, start_y, end_x, end_y)
 
         view = spine_radiograph.view
+        monochrome = PhotometricInterpretation.NORMAL
+        rotation_90 = RadiographRotation90.ROTATE_0
+        rotation_degree = 0.0
         # Apply transforms if any
         if self.transform:
             transformed = self.transform(image=crop_img)
@@ -85,11 +93,32 @@ class SpineCoordinateDataset(Dataset):
             if was_flipped(transformed):
                 view = view.flip()
                 anat_coords[0], anat_coords[2] = -anat_coords[2], -anat_coords[0]  # Flip x coords
+            if was_inverted(transformed):
+                monochrome = PhotometricInterpretation.INVERTED
+            rotation_90 = RadiographRotation90.from_angle(extract_rotation_90(transformed))
+            # adjust anat_coords based on rotation
+            if rotation_90 == RadiographRotation90.ROTATE_90:
+                anat_coords = np.array(
+                    [anat_coords[0], anat_coords[3], anat_coords[2], anat_coords[1]]
+                )
+            elif rotation_90 == RadiographRotation90.ROTATE_180:
+                anat_coords = np.array(
+                    [anat_coords[2], anat_coords[3], anat_coords[0], anat_coords[1]]
+                )
+            elif rotation_90 == RadiographRotation90.ROTATE_270:
+                anat_coords = np.array(
+                    [anat_coords[2], anat_coords[1], anat_coords[0], anat_coords[3]]
+                )
+            rotation_degree = extract_rotation_angle(transformed)
 
-        # Encode view
-        view_id = view.value
+        rad_char = RadiographCharacteristics(
+            view=view,
+            photometric_interpretation=monochrome,
+            rotation_90=rotation_90,
+            rotation_angle=rotation_degree,
+        )
 
-        return crop_img, anat_coords, view_id
+        return (crop_img, anat_coords, rad_char.to_dict())
 
 
 class SpineDataModule(LightningDataModule):

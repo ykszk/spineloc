@@ -100,6 +100,17 @@ class RadiographCharacteristics:
             "rotation_angle": self.rotation_angle,
         }
 
+    def to_value_dict(self) -> dict:
+        """
+        Convert enum values to their underlying integer values for easier use in training.
+        """
+        return {
+            "view": self.view.value,
+            "photometric_interpretation": self.photometric_interpretation.value,
+            "rotation_90": self.rotation_90.value,
+            "rotation_angle": self.rotation_angle,
+        }
+
 
 class SpineRadiograph:
     """

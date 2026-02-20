@@ -77,7 +77,7 @@ class SpineLoss:
             photometric_logits.squeeze(), target_photometric.float()
         )
         rotation_90_loss = F.cross_entropy(rotation_90_logits, target_rotation_90)
-        rotation_angle_loss = F.mse_loss(rotation_angle.squeeze(), target_rotation_angle.float())
+        rotation_angle_loss = F.mse_loss(rotation_angle.squeeze(), target_rotation_angle.float().squeeze())
 
         total_loss = self.coord_weight * coord_loss + self.aux_weight * (
             view_loss + photometric_loss + rotation_90_loss + rotation_angle_loss
@@ -118,7 +118,7 @@ class MultiTaskSpineModule(LightningModule):
 
     def shared_step(self, batch, batch_idx, log_prefix: str):
         images, coords, rad_chars = batch
-        view_ids = rad_chars["view"].long()
+        view_ids = rad_chars["view"]
         pi = rad_chars["photometric_interpretation"]
         rotation_90 = rad_chars["rotation_90"]
         rotation_angle = rad_chars["rotation_angle"]

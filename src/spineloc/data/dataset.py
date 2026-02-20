@@ -118,7 +118,7 @@ class SpineCoordinateDataset(Dataset):
             rotation_angle=rotation_degree,
         )
 
-        return (crop_img, anat_coords, rad_char.to_dict())
+        return (crop_img, anat_coords, rad_char.to_value_dict())
 
 
 class SpineDataModule(LightningDataModule):

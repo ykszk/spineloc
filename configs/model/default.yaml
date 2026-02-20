@@ -13,7 +13,7 @@ module:
     _target_: spineloc.models.spine_module.SpineLoss
     coord_loss_type: smooth_l1
     coord_weight: 1.0
-    view_weight: 1.0
+    aux_weight: 1.0
 
   optimizer:
 

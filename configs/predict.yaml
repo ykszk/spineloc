@@ -15,18 +15,6 @@ image_dir: ???
 
 task_name: predict
 
-transform:
-  _target_: torchvision.transforms.Compose
-  transforms:
-    - _target_: torchvision.transforms.Grayscale
-      num_output_channels: 1
-    - _target_: torchvision.transforms.Resize
-      size: [256, 256]
-    - _target_: torchvision.transforms.Normalize
-      mean: [0.5]
-      std: [0.5]
-    - _target_: torchvision.transforms.ToTensor
-
 dataset:
   _target_: spineloc.data.dataset.InferenceImageDataset
   image_dir: ${image_dir}

@@ -17,10 +17,14 @@ module:
 
   optimizer:
 
-    _target_: torch.optim.Adam
+    # _target_: torch.optim.Adam
+    # _partial_: true
+    # lr: 0.001
+    # weight_decay: 0.0
+    _target_: torch.optim.AdamW
     _partial_: true
     lr: 0.001
-    weight_decay: 0.0
+    weight_decay: 0.01
 
   scheduler:
     _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
@@ -29,4 +33,5 @@ module:
     factor: 0.1
     patience: 4
 
+  backbone_name: ${..net.backbone_name}
   compile: false

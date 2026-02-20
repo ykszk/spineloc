@@ -15,18 +15,6 @@ image_dir: "data/radiopaedia/test"
 
 task_name: validation
 
-transform:
-  _target_: torchvision.transforms.Compose
-  transforms:
-    - _target_: torchvision.transforms.Grayscale
-      num_output_channels: 1
-    - _target_: torchvision.transforms.Resize
-      size: [256, 256]
-    - _target_: torchvision.transforms.Normalize
-      mean: [0.5]
-      std: [0.5]
-    - _target_: torchvision.transforms.ToTensor
-
 dataset:
   _target_: torchvision.datasets.ImageFolder
   root: ${image_dir}

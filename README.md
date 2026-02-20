@@ -45,9 +45,9 @@ pixi run validate paths.output_dir=/tmp/validation safetensors_path=path/to/trai
 
 Predict on new images
 ```bash
-pixi run -e gpu predict image_dir=/tmp/new/inputs paths.output_dir=/tmp/new/outputs safetensors_path=path/to/trained.safetensors
+pixi run predict image_dir=/tmp/new/inputs paths.output_dir=/tmp/new/outputs safetensors_path=path/to/trained.safetensors
 ```
-Optionally, add `-e gpu` to run in a gpu environment
+Optionally, add `-e gpu` and `trainer=gpu data=gpu` to run with a gpu.
 
 ## Software Test
 - Run `pixi run test`

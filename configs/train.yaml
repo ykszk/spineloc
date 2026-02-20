@@ -1,5 +1,4 @@
 defaults:
-  - _self_
   - data: default
   - model: default
   - paths: default
@@ -7,6 +6,7 @@ defaults:
   - callbacks: default
   - logger: csv
   - hydra: default
+  - _self_
 
 
 task_name: train

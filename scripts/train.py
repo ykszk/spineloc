@@ -5,7 +5,7 @@ import hydra
 import lightning as L
 from lightning import Callback, Trainer
 from lightning.pytorch.loggers import Logger
-from loguru import logger as log
+from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from safetensors.torch import save_file
 
@@ -13,7 +13,9 @@ from spineloc.data.dataset import SpineDataModule
 from spineloc.models.spine import MultiTaskSpineNet
 from spineloc.models.spine_module import MultiTaskSpineModule
 from spineloc.utils.instantiators import instantiate_callbacks, instantiate_loggers
+from spineloc.utils.pylogger import RankedLogger
 
+log = RankedLogger(__name__, rank_zero_only=True)
 
 @hydra.main(version_base=None, config_path="../configs", config_name="train")
 def main(cfg: DictConfig):
@@ -53,6 +55,10 @@ def main(cfg: DictConfig):
     # Train
     trainer.fit(module, datamodule)
 
+    # Prevent multiple processes from saving the model
+    if not trainer.is_global_zero:
+        return 0
+
     ckpt_path = trainer.checkpoint_callback.best_model_path
     log.info(f"Loading best model checkpoint saved at: {ckpt_path}")
     best_model: MultiTaskSpineModule = MultiTaskSpineModule.load_from_checkpoint(
@@ -64,6 +70,12 @@ def main(cfg: DictConfig):
         best_model.net.state_dict(),
         safetensor_path,
     )
+
+    # Required for sweeping W&B runs to finish properly
+    # https://github.com/wandb/wandb/issues/1314#issuecomment-2596424189
+    if any(isinstance(lgr, WandbLogger) for lgr in logger):
+        import wandb
+        wandb.finish()
 
 
 if __name__ == "__main__":

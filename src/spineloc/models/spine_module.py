@@ -97,12 +97,14 @@ class MultiTaskSpineModule(LightningModule):
     def __init__(
         self,
         net: torch.nn.Module,
+        backbone_name: str, # passing backbone_name for logging purposes
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler.LRScheduler,
         loss=SpineLoss(),
         compile: bool = False,
     ):
         super().__init__()
+        # not ignoring "net" despite the warning, as it's needed for saving/loading the model
         self.save_hyperparameters(ignore=["loss"])
         self.net = net
         self.loss = loss
@@ -263,5 +265,4 @@ class InferenceModule(LightningModule):
         self.net = net
 
     def forward(self, x):
-        return self.net(x)
         return self.net(x)

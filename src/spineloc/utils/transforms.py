@@ -1,10 +1,11 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
+from loguru import logger
 import numpy as np
 from albumentations.core.transforms_interface import ImageOnlyTransform
 
 
-def trim_params(arr: np.ndarray, min_p=0.2, max_p=0.8) -> Tuple[int, int, int, int]:
+def trim_params(arr: np.ndarray, min_p=0.2, max_p=0.8) -> Optional[Tuple[int, int, int, int]]:
     """
     Calculate cropping parameters for trimming nearly empty space from the array based on pixel value thresholds.
     """
@@ -14,6 +15,8 @@ def trim_params(arr: np.ndarray, min_p=0.2, max_p=0.8) -> Tuple[int, int, int, i
     max_allowed = max_p * (max_value - min_value)
     inside = (arr >= min_allowed) & (arr <= max_allowed)
     coords = np.argwhere(inside)
+    if coords.size == 0:
+        return None
     y0, x0 = coords.min(axis=0)
     y1, x1 = coords.max(axis=0) + 1  # slices are exclusive at the top
     return y0, x0, y1, x1
@@ -30,7 +33,11 @@ def trim(img: np.ndarray, min_p=0.2, max_p=0.8) -> np.ndarray:
     else:
         raise ValueError("Input image must be 2D or 3D array.")
 
-    y0, x0, y1, x1 = trim_params(arr, min_p=min_p, max_p=max_p)
+    params = trim_params(arr, min_p=min_p, max_p=max_p)
+    if params is None:
+        logger.warning("No valid cropping parameters found. Returning original image.")
+        return arr
+    y0, x0, y1, x1 = params
     return arr[y0:y1, x0:x1]
 
 
